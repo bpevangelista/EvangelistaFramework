@@ -21,7 +21,7 @@ namespace efw
 	namespace FileReader
 	{
 		int32_t Read(void* outData, int32_t outDataSize, const char* filename);
-		int32_t ReadAll(void** outData, int32_t* outSize, const char* filename, int32_t requiredAlignment);
+		int32_t ReadAll(void** outData, int32_t* outSize, const char* filename, int32_t requiredAlignment = File::kDefaultDataAlignment);
 	}
 
 } // efw

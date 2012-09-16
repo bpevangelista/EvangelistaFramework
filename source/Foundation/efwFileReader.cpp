@@ -23,7 +23,7 @@ int32_t FileReader::Read(void* outData, int32_t outDataSize, const char* filenam
 	fseek(file, 0, SEEK_END);
 	size_t fileSize = ftell(file);
 	fseek(file, 0, SEEK_SET);
-	size_t maxReadSize = Math::Min(fileSize, outDataSize);
+	size_t maxReadSize = Math::Min(fileSize, (uint32_t)outDataSize);
 
 	size_t readedBytes = 0;
 	if (outDataSize > 0)
