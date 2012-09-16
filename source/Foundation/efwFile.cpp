@@ -20,7 +20,8 @@ int32_t File::GetInfo(FileInfo* outFileInfo, const char* filename)
 	{
 		outFileInfo->exists = true;
 		outFileInfo->size = (size_t)stats.st_size;
+		return efwErrs::kOk;
 	}
 
-	return efwErrs::kOk;
+	return efwErrs::kOperationFailed;
 }
