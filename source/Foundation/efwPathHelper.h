@@ -13,8 +13,7 @@
  */
 #pragma once
 
-#include <string>
-//#include <wchar.h>
+#include "Foundation/efwPlatform.h"
 
 namespace efw
 {
