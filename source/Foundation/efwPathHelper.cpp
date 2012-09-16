@@ -1,6 +1,7 @@
-#include "Foundation/efwPlatform.h"
 #include "Foundation/efwPathHelper.h"
 #include "Foundation/efwStringHelper.h"
+#include "Math/efwMath.h"
+#include <string>
 
 using namespace efw;
 
@@ -17,13 +18,13 @@ int32_t PathHelper::GetDirectory(char* outPath, int32_t outPathLength, const cha
 
 	int32_t result1 = StringHelper::LastIndexOf(fullPath, kPlatformDirectorySeparator1);
 	int32_t result2 = StringHelper::LastIndexOf(fullPath, kPlatformDirectorySeparator2);
-	int32_t result = MAX(result1, result2);
+	int32_t result = Math::Max(result1, result2);
 	if (result != -1)
 		directoryLength = result;
 
 	if (directoryLength > 0)
 	{
-		directoryLength = MIN(directoryLength, outPathLength-1);
+		directoryLength = Math::Min(directoryLength, outPathLength-1);
 		memcpy(outPath, fullPath, directoryLength);
 	}
 	outPath[directoryLength] = '\0';
@@ -43,7 +44,7 @@ int32_t PathHelper::Combine(char* outPath, int32_t outPathLength, const char* pa
 	int32_t pathSize = strlen(path);
 	int32_t fileNameSize = strlen(fileName);
 	if (outPathLength < (pathSize+fileNameSize+2))	// Add '\\' directory separator and '\0'
-		return efwErrs::kInvalidOperation;
+		return efwErrs::kInvalidInput;
 
 	int32_t index = 0;
 	memcpy(&outPath[index], path, pathSize);
