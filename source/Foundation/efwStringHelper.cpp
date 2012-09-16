@@ -1,5 +1,6 @@
 #include "Foundation/efwStringHelper.h"
 #include "Foundation/efwMemory.h"
+#include "Math/efwMath.h"
 
 #include <string.h>
 #include <stdlib.h>
@@ -88,7 +89,7 @@ int32_t StringHelper::GetFirstToken(void* outToken, int32_t tokenSize, const cha
 			index++;
 
 		// Generate token
-		int32_t copyLength = MIN(index - startIndex, tokenSize-1);
+		int32_t copyLength = Math::Min(index - startIndex, tokenSize-1);
 		memcpy(outToken, &str[startIndex], copyLength);
 		((char*)outToken)[copyLength] = '\0';
 
