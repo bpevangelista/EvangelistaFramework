@@ -25,6 +25,8 @@ namespace efw
 
 	namespace File
 	{
+		const int32_t kDefaultDataAlignment = 16;
+
 		int32_t GetInfo(FileInfo* outFileInfo, const char* filename);
 	}
 
