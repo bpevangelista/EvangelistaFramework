@@ -1,12 +1,71 @@
 #include "Graphics/efwTextureReader.h"
-
+#include "Graphics/efwImageTypes.h"
 #include "Foundation/efwMemory.h"
-#include "Foundation/efwFileReader.h"
-#include "Graphics/efwTexture.h"
-#include "Graphics/efwUnprocessedTriMesh.h"
+#include "Math/efwMath.h"
 
 using namespace efw;
 using namespace efw::Graphics;
+
+void TextureReader::Release(Texture* outTexture)
+{
+	if (outTexture == NULL)
+		return;
+
+	SAFE_ALIGNED_FREE(outTexture->data);
+}
+
+
+int32_t TextureReader::CalculatePitch(int32_t width, int32_t textureFormat)
+{
+	switch (textureFormat)
+	{
+		case TextureFormats::kRGB:
+			return width * 3;
+
+		case TextureFormats::kABGR:
+		case TextureFormats::kRGBA:
+			return width * 4;
+
+		case TextureFormats::kDXT1:
+			return Math::Max(1, (width+3) / 4) * 8;
+
+		case TextureFormats::kDXT3:
+		case TextureFormats::kDXT5:
+			return Math::Max(1, (width+3) / 4) * 16;
+			break;
+
+		default:
+			EFW_ASSERT(false);
+			return 0;
+	};
+}
+
+
+int32_t TextureReader::CalculateSize(int32_t width, int32_t height, int32_t depth, int32_t mipCount, int32_t textureFormat)
+{
+	int32_t layerSize = 0;
+
+	do
+	{
+		int32_t pitch = CalculatePitch(Math::Max(1, width), textureFormat);
+
+		int32_t heightOrBlockCount = height;
+		if (textureFormat == TextureFormats::kDXT1 ||
+			textureFormat == TextureFormats::kDXT3 ||
+			textureFormat == TextureFormats::kDXT5)
+		{
+			heightOrBlockCount = Math::Max(1, (height+3) / 4);
+		}
+
+		layerSize += pitch * heightOrBlockCount;
+		mipCount--;
+		width >>= 1;
+		height >>= 1;
+	} while (mipCount > 0);
+	
+	return layerSize * depth;
+}
+
 
 int32_t TextureReader::GetTextureFileType(int32_t* outTextureFileType, const char* textureName)
 {
@@ -28,7 +87,7 @@ int32_t TextureReader::GetTextureFileType(int32_t* outTextureFileType, const cha
 }
 
 
-int32_t TextureReader::ReadImage(UnprocessedMaterialTexture** outTexture, const char* filename)
+int32_t TextureReader::ReadImage(Texture** outTexture, const char* filename)
 {
 	*outTexture = NULL;
 
@@ -38,7 +97,7 @@ int32_t TextureReader::ReadImage(UnprocessedMaterialTexture** outTexture, const 
 	switch (textureFileType)
 	{
 	case TextureFileTypes::kBMP:
-		//
+		// TODO Not implemented yet
 		EFW_ASSERT(false);
 		break;
 
@@ -47,8 +106,7 @@ int32_t TextureReader::ReadImage(UnprocessedMaterialTexture** outTexture, const 
 		break;
 
 	case TextureFileTypes::kDDS:
-		//
-		EFW_ASSERT(false);
+		return ReadDDS(outTexture, filename);
 		break;
 
 	default:
@@ -60,38 +118,17 @@ int32_t TextureReader::ReadImage(UnprocessedMaterialTexture** outTexture, const 
 }
 
 
-int32_t TextureReader::ReadTGA(UnprocessedMaterialTexture** outTexture, const char* filename)
+int32_t TextureReader::ReadTGA(Texture** outTexture, const char* filename, int32_t requiredDataAlignment)
 {
-
-	PACKED( struct TGA_Header
-	{
-		uint8_t identsize;          // size of ID field that follows 18 byte header (0 usually)
-		uint8_t colourmaptype;      // type of colour map 0=none, 1=has palette
-		uint8_t imagetype;          // type of image 0=none,1=indexed,2=rgb,3=grey,+8=rle packed
-
-		uint16_t colourmapstart;     // first colour map entry in palette
-		uint16_t colourmaplength;    // number of colours in palette
-		uint8_t colourmapbits;      // number of bits per palette entry 15,16,24,32
-
-		uint16_t xstart;             // image x origin
-		uint16_t ystart;             // image y origin
-		uint16_t width;              // image width in pixels
-		uint16_t height;             // image height in pixels
-		uint8_t bits;               // image bits per pixel 8,16,24,32
-		uint8_t descriptor;         // image descriptor bits (vh flip bits)
-	} );
-
-
 	void* textureFileData = NULL;
 	int32_t textureFileSize = 0;
 
-	int32_t kTextureAlignment = 1024;
-	FileReader::ReadAll(&textureFileData, &textureFileSize, filename, kTextureAlignment);
+	FileReader::ReadAll(&textureFileData, &textureFileSize, filename);
 	if (textureFileData == NULL)
-		return efwErrs::kInvalidState;
+		return efwErrs::kInvalidInput;
 		
-	TGA_Header* tgaHeader = (TGA_Header*)textureFileData;
-	void* imageData = (uint8_t*)textureFileData + sizeof(TGA_Header);
+	ImageTGA::Header* tgaHeader = (ImageTGA::Header*)textureFileData;
+	void* imageData = (uint8_t*)textureFileData + sizeof(ImageTGA::Header);
 
 	// Fix endianess
 	tgaHeader->colourmapstart = efwEndianSwap(tgaHeader->colourmapstart);
@@ -113,18 +150,82 @@ int32_t TextureReader::ReadTGA(UnprocessedMaterialTexture** outTexture, const ch
 	EFW_ASSERT(isValidTexture);
 
 	// Copy image data to VRAM
-	void* textureData = memalign(kTextureAlignment, imageDataSize);
+	void* textureData = memalign(requiredDataAlignment, imageDataSize);
 	memcpy(textureData, imageData, imageDataSize);
 
 	// Copy out
-	UnprocessedMaterialTexture* result = (UnprocessedMaterialTexture*)memalign(16, sizeof(UnprocessedMaterialTexture));
-	result->width = tgaHeader->width;
-	result->height = tgaHeader->height;
-	result->pitch = imagePitch;
-	result->format = TextureDataFormats::kABGR;
+	Texture* result = (Texture*)memalign(16, sizeof(Texture));
+	result->desc.width = tgaHeader->width;
+	result->desc.height = tgaHeader->height;
+	result->desc.depth = 1;
+	result->desc.pitch = imagePitch;
+	result->desc.mipCount = 1;
+	result->desc.format = TextureFormats::kABGR;
+	result->dataSize = imageDataSize;
 	result->data = textureData;
-	memset(result->sourceFilename, 0, COUNTOF(result->sourceFilename));
-	strcpy(result->sourceFilename, filename);
+	*outTexture = result;
+
+	SAFE_ALIGNED_FREE(textureFileData);
+	return efwErrs::kOk;
+}
+
+
+int32_t TextureReader::ReadDDS(Texture** outTexture, const char* filename, int32_t requiredDataAlignment)
+{
+	ImageDDS::Header* ddsHeader = NULL;
+	ImageDDS::DX10Header* ddsDX10Header = NULL;
+	void* imageData = NULL;
+	void* textureFileData = NULL;
+	int32_t textureFileSize = 0;
+
+	FileReader::ReadAll(&textureFileData, &textureFileSize, filename);
+	if (textureFileData != NULL && textureFileSize > sizeof(ImageDDS::Header))
+		ddsHeader = (ImageDDS::Header*)textureFileData;
+	
+	if (textureFileData == NULL || ddsHeader->signature != ImageDDS::kFileSignature || ddsHeader->size != ImageDDS::kHeaderSize)
+	{
+		SAFE_ALIGNED_FREE(textureFileData);
+		return efwErrs::kInvalidInput;
+	}
+
+	// Check flags
+	if ((ddsHeader->pixelFormat.flags & ImageDDS::kPixelFormatFlags_IsFourCC) != 0 &&
+		ddsHeader->pixelFormat.fourCC == ImageDDS::kPixelFormatFourCC_DX10)
+	{
+		ddsDX10Header = (ImageDDS::DX10Header*)((uint8_t*)textureFileData + sizeof(ImageDDS::Header));
+		imageData = (uint8_t*)textureFileData + sizeof(ImageDDS::Header) + sizeof(ImageDDS::DX10Header);
+	}
+	else
+	{
+		imageData = (uint8_t*)textureFileData + sizeof(ImageDDS::Header);
+	}
+
+	// Get image desc
+	int32_t width = Math::Max(1, ddsHeader->width);
+	int32_t height = Math::Max(1, ddsHeader->height);
+	int32_t depth = Math::Max(1, ddsHeader->depth);
+	int32_t mipCount = Math::Max(1, ddsHeader->mipMapCount);
+	int32_t textureFormat = ImageDDS::GetTextureFormat(ddsHeader);
+	int32_t imageDataPitch = CalculatePitch(width, textureFormat);
+	int32_t imageDataSize = CalculateSize(width, height, depth, mipCount, textureFormat);
+
+	int32_t checkImageDataSize = textureFileSize - ((uint32_t)imageData - (uint32_t)textureFileData);
+	EFW_ASSERT(imageDataSize == checkImageDataSize);
+
+	// Copy image data to VRAM
+	void* textureData = memalign(requiredDataAlignment, imageDataSize);
+	memcpy(textureData, imageData, imageDataSize);
+
+	// Copy out
+	Texture* result = (Texture*)memalign(16, sizeof(Texture));
+	result->desc.width = width;
+	result->desc.height = height;
+	result->desc.height = depth;
+	result->desc.pitch = imageDataPitch;
+	result->desc.mipCount = mipCount;
+	result->desc.format = textureFormat;
+	result->dataSize = imageDataSize;
+	result->data = textureData;
 	*outTexture = result;
 
 	SAFE_ALIGNED_FREE(textureFileData);
