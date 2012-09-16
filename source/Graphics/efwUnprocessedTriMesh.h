@@ -17,39 +17,8 @@
 
 namespace efw
 {
-
 namespace Graphics
 {
-	const int32_t kObjTriMeshMaxNameLength = 64;
-
-	struct UnprocessedMaterialTexture
-	{
-		int32_t width;
-		int32_t height;
-		int32_t pitch;
-		int32_t format;
-		void* data;
-
-		char sourceFilename[Path::kMaxFullPathLength];
-	};
-
-	struct UnprocessedMaterial
-	{
-		int64_t id;
-
-		UnprocessedMaterialTexture* albedoTexture;
-		UnprocessedMaterialTexture* normalMapTexture;
-		//UnprocessedMaterialTexture specularTexture;
-		//UnprocessedMaterialTexture specularPowerTexture;
-	};
-
-
-	struct UnprocessedMaterialLib
-	{
-		int32_t materialCount;
-		UnprocessedMaterial materials[];
-	};
-
 	namespace VertexAttributes
 	{
 		const int32_t kPosition		= 0;
@@ -100,8 +69,9 @@ namespace Graphics
 		void* vertexData;
 		void* indexData;
 
-		// Debug
-		char name[kObjTriMeshMaxNameLength];
+		static const int32_t kMaxNameLength = 64;
+		int64_t nameHash;
+		char name[kMaxNameLength];
 	};
 
 	/**
