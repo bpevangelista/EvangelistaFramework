@@ -13,9 +13,10 @@
  */
 #pragma once
 
+#include "Foundation/efwPlatform.h"
+
 namespace efw
 {
-
 namespace Graphics
 {
 
@@ -72,9 +73,11 @@ namespace Graphics
 		uint8_t* vertexGpuData;
 		int32_t vertexGpuDataSize;
 		int32_t vertexGpuDataCount;
-		
+
+#if defined(_DEBUG)
 		// Chunks debug data
 		char chunkName[kObjTriMeshMaxNameLength];
+#endif
 	};
 
 
