@@ -43,8 +43,8 @@ INLINE void freealign(void* address) { _aligned_free(address); }
 #endif
 
 // Only works with power of 2
-#ifndef ALIGN
-#define ALIGN(alignment, value) (((value)+(alignment)-1) & ~((alignment)-1))
+#ifndef EFW_ALIGN
+#define EFW_ALIGN(alignment, value) (((value)+(alignment)-1) & ~((alignment)-1))
 #endif
 
 #ifndef SAFE_ALIGNED_FREE
@@ -55,25 +55,13 @@ INLINE void freealign(void* address) { _aligned_free(address); }
 #define SAFE_DELETE(a) do { if((a) != NULL) { delete(a); (a) = NULL; } } while(false)
 #endif
 
-#ifndef SAFE_DELETE_ARRAY
-#define SAFE_DELETE_ARRAY(a) do { if((a) != NULL) { delete [] (a); (a) = NULL; } } while(false)
-#endif
-
 // TODO: Needs to be improved
-#ifndef COUNTOF
-#define COUNTOF(a) (sizeof(a)/sizeof(*(a)))
+#ifndef EFW_COUNTOF
+#define EFW_COUNTOF(a) (sizeof(a)/sizeof(*(a)))
 #endif
 
-#ifndef MIN
-#define MIN(a, b) ( ((a) < (b))? (a) : (b) )
-#endif
-
-#ifndef MAX
-#define MAX(a, b) ( ((a) > (b))? (a) : (b) )
-#endif
-
-#ifndef UNUSED
-#define UNUSED(a) (void)(a)
+#ifndef EFW_UNUSED
+#define EFW_UNUSED(a) (void)(a)
 #endif
 
 // Temporary: TODO FIX
@@ -82,7 +70,7 @@ INLINE void freealign(void* address) { _aligned_free(address); }
 	#if defined _DEBUG
 	#define EFW_ASSERT(a) assert(a)
 	#else 
-	#define EFW_ASSERT(a) UNUSED(a)
+	#define EFW_ASSERT(a) EFW_UNUSED(a)
 	#endif
 #endif
 
@@ -91,7 +79,7 @@ namespace Path
 {
 	const int32_t kMaxDirectoryLength = 1024;
 	const int32_t kMaxFileNameLength = 256;
-	const int32_t kMaxFullPathLength = ALIGN(4, (kMaxDirectoryLength + kMaxFileNameLength));
+	const int32_t kMaxFullPathLength = EFW_ALIGN(4, (kMaxDirectoryLength + kMaxFileNameLength));
 };
 
 // Generic types
@@ -103,7 +91,7 @@ enum efwErr
 	kCorruptedData,
 	kInvalidInput,
 	kInvalidState,
-	kInvalidOperation
+	kOperationFailed
 };
 }
 
