@@ -16,6 +16,7 @@
     <ClCompile Include="source\Foundation\efwFileReader.cpp" />
     <ClCompile Include="source\Foundation\efwPathHelper.cpp" />
     <ClCompile Include="source\Foundation\efwStringHelper.cpp" />
+    <ClCompile Include="source\Graphics\efwImateTypes.cpp" />
     <ClCompile Include="source\Graphics\efwTextureReader.cpp" />
     <ClCompile Include="source\Graphics\efwUnprocessedTriMeshHelper.cpp" />
     <ClCompile Include="source\Graphics\efwWavefronObjReader.cpp" />
@@ -31,9 +32,11 @@
     <ClInclude Include="source\Graphics\efwTexture.h" />
     <ClInclude Include="source\Graphics\efwTextureReader.h" />
     <ClInclude Include="source\Graphics\efwTriMesh.h" />
+    <ClInclude Include="source\Graphics\efwUnprocessedMaterial.h" />
     <ClInclude Include="source\Graphics\efwUnprocessedTriMesh.h" />
     <ClInclude Include="source\Graphics\efwUnprocessedTriMeshHelper.h" />
     <ClInclude Include="source\Graphics\efwWavefrontObjReader.h" />
+    <ClInclude Include="source\Graphics\efwImageTypes.h" />
     <ClInclude Include="source\Math\efwVectorMath.h" />
     <ClInclude Include="source\Math\efwMath.h" />
   </ItemGroup>
