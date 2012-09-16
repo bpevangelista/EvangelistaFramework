@@ -220,7 +220,7 @@ int32_t TextureReader::ReadDDS(Texture** outTexture, const char* filename, int32
 	Texture* result = (Texture*)memalign(16, sizeof(Texture));
 	result->desc.width = width;
 	result->desc.height = height;
-	result->desc.height = depth;
+	result->desc.depth = depth;
 	result->desc.pitch = imageDataPitch;
 	result->desc.mipCount = mipCount;
 	result->desc.format = textureFormat;
