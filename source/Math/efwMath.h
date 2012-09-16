@@ -20,6 +20,8 @@ namespace efw
 {
 	namespace Math
 	{
+		inline uint32_t Min(uint32_t v1, uint32_t v2) { return (v1<v2)? v1 : v2; }
+		inline uint32_t Max(uint32_t v1, uint32_t v2) { return (v1<v2)? v2 : v1; }
 		inline int32_t Min(int32_t v1, int32_t v2) { return (v1<v2)? v1 : v2; }
 		inline int32_t Max(int32_t v1, int32_t v2) { return (v1<v2)? v2 : v1; }
 		inline float Min(float v1, float v2) { return (v1<v2)? v2 : v1; }
