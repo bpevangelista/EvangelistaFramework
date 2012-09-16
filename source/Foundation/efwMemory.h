@@ -21,18 +21,17 @@
 namespace efw
 {
 
-#if defined(ENABLE_ENDIAN_SWAP)
-inline int16_t efwEndianSwap(int16_t value)
+inline int16_t efwRevert16(int16_t value)
 {
 	return (value >> 8) | (value << 8);
 }
 
-inline uint16_t efwEndianSwap(uint16_t value)
+inline uint16_t efwRevert16(uint16_t value)
 {
 	return (value >> 8) | (value << 8);
 }
 
-inline int32_t efwEndianSwap(int32_t value)
+inline int32_t efwRevert32(int32_t value)
 {
 	return (
 		(value >> 24) | 
@@ -41,7 +40,7 @@ inline int32_t efwEndianSwap(int32_t value)
 		((value & 0x0000FF00) << 8) );
 }
 
-inline uint32_t efwEndianSwap(uint32_t value)
+inline uint32_t efwRevert32(uint32_t value)
 {
 	return (
 		(value >> 24) | 
@@ -49,18 +48,25 @@ inline uint32_t efwEndianSwap(uint32_t value)
 		((value & 0x00FF0000) >> 8) |
 		((value & 0x0000FF00) << 8) );
 }
+
+// Those endian swap functions can be enabled per-platform
+#if defined(PLATFORM_BIGENDIAN)
+inline int16_t efwEndianSwapIfRequired(int16_t value) { return efwRevert16(value); }
+inline uint16_t efwEndianSwapIfRequired(uint16_t value) {	return efwRevert16(value); }
+inline int32_t efwEndianSwapIfRequired(int32_t value) { return efwRevert32(value); }
+inline uint32_t efwEndianSwapIfRequired(uint32_t value) { return efwRevert32(value); }
 #else
-inline int16_t efwEndianSwap(int16_t value) { return value; }
-inline uint16_t efwEndianSwap(uint16_t value) { return value; }
-inline int32_t efwEndianSwap(int32_t value) { return value; }
-inline uint32_t efwEndianSwap(uint32_t value) { return value; }
+inline int16_t efwEndianSwapIfRequired(int16_t value) { return value; }
+inline uint16_t efwEndianSwapIfRequired(uint16_t value) { return value; }
+inline int32_t efwEndianSwapIfRequired(int32_t value) { return value; }
+inline uint32_t efwEndianSwapIfRequired(uint32_t value) { return value; }
 #endif
 
 
-inline uint32_t efwAlign(uint32_t alignment, uint32_t value)
-{
-	return (value + (alignment - 1)) & ( ~(alignment - 1) );
-}
+//inline uint32_t efwAlign(uint32_t alignment, uint32_t value)
+//{
+//	return (value + (alignment - 1)) & ( ~(alignment - 1) );
+//}
 
 const int64_t kHashEncodeStart = 0xBB40E64DA205B064L;
 const int64_t kHashEncodeMul = 7664345821815920749L;
