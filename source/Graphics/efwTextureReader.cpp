@@ -47,7 +47,7 @@ int32_t TextureReader::CalculateSize(int32_t width, int32_t height, int32_t dept
 
 	do
 	{
-		int32_t pitch = CalculatePitch(Math::Max(1, width), textureFormat);
+		int32_t pitch = CalculatePitch(width, textureFormat);
 
 		int32_t heightOrBlockCount = height;
 		if (textureFormat == TextureFormats::kDXT1 ||
@@ -131,12 +131,12 @@ int32_t TextureReader::ReadTGA(Texture** outTexture, const char* filename, int32
 	void* imageData = (uint8_t*)textureFileData + sizeof(ImageTGA::Header);
 
 	// Fix endianess
-	tgaHeader->colourmapstart = efwEndianSwap(tgaHeader->colourmapstart);
-	tgaHeader->colourmaplength = efwEndianSwap(tgaHeader->colourmaplength);
-	tgaHeader->xstart = efwEndianSwap(tgaHeader->xstart);
-	tgaHeader->ystart = efwEndianSwap(tgaHeader->ystart);
-	tgaHeader->width = efwEndianSwap(tgaHeader->width);
-	tgaHeader->height = efwEndianSwap(tgaHeader->height);
+	tgaHeader->colourmapstart = efwEndianSwapIfRequired(tgaHeader->colourmapstart);
+	tgaHeader->colourmaplength = efwEndianSwapIfRequired(tgaHeader->colourmaplength);
+	tgaHeader->xstart = efwEndianSwapIfRequired(tgaHeader->xstart);
+	tgaHeader->ystart = efwEndianSwapIfRequired(tgaHeader->ystart);
+	tgaHeader->width = efwEndianSwapIfRequired(tgaHeader->width);
+	tgaHeader->height = efwEndianSwapIfRequired(tgaHeader->height);
 
 	int32_t textureBpp = (tgaHeader->bits >> 3);
 	int32_t imagePitch = tgaHeader->width * textureBpp;
@@ -153,6 +153,16 @@ int32_t TextureReader::ReadTGA(Texture** outTexture, const char* filename, int32
 	void* textureData = memalign(requiredDataAlignment, imageDataSize);
 	memcpy(textureData, imageData, imageDataSize);
 
+	// Convert BGRA to RGBA
+	EFW_ASSERT(imageDataSize%4==0);
+	for (int i=0; i<imageDataSize; i+=4)
+	{
+		uint8_t* textureDataU8 = &((uint8_t*)textureData)[i];
+		uint8_t temp = textureDataU8[0];
+		textureDataU8[0] = textureDataU8[2];
+		textureDataU8[2] = temp;
+	}
+
 	// Copy out
 	Texture* result = (Texture*)memalign(16, sizeof(Texture));
 	result->desc.width = tgaHeader->width;
@@ -160,7 +170,7 @@ int32_t TextureReader::ReadTGA(Texture** outTexture, const char* filename, int32
 	result->desc.depth = 1;
 	result->desc.pitch = imagePitch;
 	result->desc.mipCount = 1;
-	result->desc.format = TextureFormats::kABGR;
+	result->desc.format = TextureFormats::kRGBA;
 	result->dataSize = imageDataSize;
 	result->data = textureData;
 	*outTexture = result;
@@ -182,10 +192,18 @@ int32_t TextureReader::ReadDDS(Texture** outTexture, const char* filename, int32
 	if (textureFileData != NULL && textureFileSize > sizeof(ImageDDS::Header))
 		ddsHeader = (ImageDDS::Header*)textureFileData;
 	
-	if (textureFileData == NULL || ddsHeader->signature != ImageDDS::kFileSignature || ddsHeader->size != ImageDDS::kHeaderSize)
+	if (textureFileData == NULL || ddsHeader->signature != ImageDDS::kFileSignature || ddsHeader->size != efwEndianSwapIfRequired(ImageDDS::kHeaderSize))
 	{
 		SAFE_ALIGNED_FREE(textureFileData);
 		return efwErrs::kInvalidInput;
+	}
+
+	// Endian swap
+	EFW_ASSERT(sizeof(ImageDDS::Header) % 4 == 0);
+	for (int i=0; i<sizeof(ImageDDS::Header)/4; i++)
+	{
+		int32_t* data = &((int32_t*)ddsHeader)[i];
+		*data = efwEndianSwapIfRequired(*data);
 	}
 
 	// Check flags
@@ -198,6 +216,17 @@ int32_t TextureReader::ReadDDS(Texture** outTexture, const char* filename, int32
 	else
 	{
 		imageData = (uint8_t*)textureFileData + sizeof(ImageDDS::Header);
+	}
+
+	// Endian swap
+	if (ddsDX10Header != NULL)
+	{
+		EFW_ASSERT(sizeof(ImageDDS::DX10Header) % 4 == 0);
+		for (int i=0; i<sizeof(ImageDDS::DX10Header)/4; i++)
+		{
+			int32_t* data = &((int32_t*)ddsDX10Header)[i];
+			*data = efwEndianSwapIfRequired(*data);
+		}
 	}
 
 	// Get image desc

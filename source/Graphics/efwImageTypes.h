@@ -21,7 +21,11 @@ namespace Graphics
 {
 	namespace ImageDDS
 	{
+#if defined(PLATFORM_BIGENDIAN)
+		#define MAKE_FOURCC(a,b,c,d) ((int32_t)d | ((int32_t)c << 8) | ((int32_t)b << 16) | ((int32_t)a << 24))		
+#else
 		#define MAKE_FOURCC(a,b,c,d) ((int32_t)a | ((int32_t)b << 8) | ((int32_t)c << 16) | ((int32_t)d << 24))
+#endif
 
 		const int32_t kFileSignature = MAKE_FOURCC('D','D','S',' ');
 		const int32_t kHeaderSize = 124;
