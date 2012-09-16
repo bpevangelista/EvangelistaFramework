@@ -4,18 +4,21 @@
 #include <map>
 
 #include "Foundation/efwMemory.h"
-
 #include "Foundation/efwConsole.h"
 #include "Foundation/efwFileReader.h"
 #include "Foundation/efwPathHelper.h"
 #include "Foundation/efwStringHelper.h"
 #include "Graphics/efwTextureReader.h"
 #include "Graphics/efwUnprocessedTriMesh.h"
-
+#include "Math/efwMath.h"
 
 using namespace std;
 using namespace efw;
 using namespace efw::Graphics;
+
+// Global line counter
+int32_t gModelInputLineCount = 0;
+int32_t gMaterialInputLineCount = 0;
 
 struct WavefrontObjVertexAttribute
 {
@@ -30,9 +33,30 @@ struct WavefrontObjVertexAttributes
 };
 
 
-// Global line counter
-int32_t gModelInputLineCount = 0;
-int32_t gMaterialInputLineCount = 0;
+void WavefrontObjReader::Release(UnprocessedTriModel* model)
+{
+	if (model == NULL)
+		return;
+
+	for (int32_t i=0; i < model->meshCount; ++i)
+	{
+		SAFE_ALIGNED_FREE(model->meshes[i].vertexData);
+		SAFE_ALIGNED_FREE(model->meshes[i].indexData);
+	}
+}
+
+
+void WavefrontObjReader::Release(UnprocessedMaterialLib* materialLib)
+{
+	if (materialLib == NULL)
+		return;
+
+	for (int32_t i=0; i < materialLib->materialCount; ++i)
+	{
+		TextureReader::Release(materialLib->materials[i].albedoTexture);
+		TextureReader::Release(materialLib->materials[i].normalMapTexture);
+	}
+}
 
 
 int32_t ParseVertexAttribute(WavefrontObjVertexAttributes* outVertexAttributes, const TokenArray* tokenArray)
@@ -156,7 +180,7 @@ int32_t ParseFace(vector<int32_t>* outIndexData, vector<uint64_t>* currentVertex
 	if (faceVertexCount == 3)
 	{
 		int32_t indices[] = { 2, 1, 0 };
-		for (int32_t i=0; i<COUNTOF(indices); i++)
+		for (int32_t i=0; i<EFW_COUNTOF(indices); i++)
 		{
 			outIndexData->push_back( faceVertexIndices[ indices[i] ] );
 		}
@@ -164,7 +188,7 @@ int32_t ParseFace(vector<int32_t>* outIndexData, vector<uint64_t>* currentVertex
 	else if (faceVertexCount == 4)
 	{
 		int32_t indices[] = { 2, 1, 0, 2, 0, 3 };
-		for (int32_t i=0; i<COUNTOF(indices); i++)
+		for (int32_t i=0; i<EFW_COUNTOF(indices); i++)
 		{
 			outIndexData->push_back( faceVertexIndices[ indices[i] ] );
 		}
@@ -228,7 +252,7 @@ int32_t GenerateMesh(UnprocessedTriMesh* outMesh, const WavefrontObjVertexAttrib
 	if (strcmp(outMesh->name, "") == 0)
 	{
 		const char kDefaultMeshName[] = "NoName";
-		memcpy(outMesh->name, kDefaultMeshName, COUNTOF(kDefaultMeshName));
+		memcpy(outMesh->name, kDefaultMeshName, EFW_COUNTOF(kDefaultMeshName));
 	}
 
 	// Process index data
@@ -366,11 +390,17 @@ int32_t WavefrontObjReader::ReadMaterialLib(UnprocessedMaterialLib** outMaterial
 		const char* tokenKey = StringHelper::GetTokenAt(tokenArray, 0);
 		const char* tokenValue = StringHelper::GetTokenAt(tokenArray, 1);
 
+		int32_t materialIndex = materials.size();
+
 		if (strcmp(tokenKey, "newmtl") == 0)
 		{
-			int32_t materialIndex = materials.size();
 			materials.resize(materials.size() + 1);
-			materials[materialIndex].id = efwHash64(tokenValue, strlen(tokenValue));
+			UnprocessedMaterial& material = materials[materialIndex];
+			
+			int32_t nameSize = Math::Min(EFW_COUNTOF(material.name)-1, strlen(tokenValue));
+			memcpy(material.name, tokenValue, nameSize);
+			material.name[nameSize] = 0;
+			material.nameHash = efwHash64(material.name, nameSize);
 		}
 		// Textures
 		else 
@@ -380,17 +410,30 @@ int32_t WavefrontObjReader::ReadMaterialLib(UnprocessedMaterialLib** outMaterial
 		
 			if (isAlbedoTexture || isNormalTexture)
 			{
-				int32_t materialIndex = materials.size() - 1;
+				UnprocessedMaterial& material = materials[materialIndex-1];
+
 				char directoryPath[Path::kMaxDirectoryLength];
 				char fullTexturePath[Path::kMaxFullPathLength];
-
 				PathHelper::GetDirectory(directoryPath, Path::kMaxDirectoryLength, fullFilePath);
 				PathHelper::Combine(fullTexturePath, Path::kMaxFullPathLength, directoryPath, StringHelper::GetTokenAt(tokenArray, 1));
 			
 				if (isAlbedoTexture)
-					TextureReader::ReadImage(&materials[materialIndex].albedoTexture, fullTexturePath);
+				{
+					// Copy texture name
+					int32_t filenameSize = Math::Min(EFW_COUNTOF(material.albedoTextureFilename)-1, strlen(fullTexturePath));
+					memcpy(material.albedoTextureFilename, fullTexturePath, filenameSize);
+					material.albedoTextureFilename[filenameSize] = 0;
+
+					TextureReader::ReadImage(&material.albedoTexture, fullTexturePath);
+				}
 				else if (isNormalTexture)
-					TextureReader::ReadImage(&materials[materialIndex].normalMapTexture, fullTexturePath);
+				{
+					int32_t filenameSize = Math::Min(EFW_COUNTOF(material.normalMapTextureFilename)-1, strlen(fullTexturePath));
+					memcpy(material.normalMapTextureFilename, fullTexturePath, filenameSize);
+					material.normalMapTextureFilename[filenameSize] = 0;
+
+					TextureReader::ReadImage(&material.normalMapTexture, fullTexturePath);
+				}
 			}
 		}
 	}
@@ -413,14 +456,10 @@ int32_t WavefrontObjReader::ReadMaterialLib(UnprocessedMaterialLib** outMaterial
 }
 
 
-int32_t WavefrontObjReader::ReadModelAndMaterials(UnprocessedTriModel** outModel, UnprocessedMaterialLib** outMaterialLib, const char* fullFilePath,
-	ReadFileFunc_t readFileFunc)
+int32_t WavefrontObjReader::ReadModelAndMaterials(UnprocessedTriModel** outModel, UnprocessedMaterialLib** outMaterialLib, const char* fullFilePath, ReadFileFunc_t readFileFunc)
 {
 	if (fullFilePath == NULL || outModel == NULL || outMaterialLib == NULL)
 		return efwErrs::kInvalidInput;
-
-	if (readFileFunc == NULL)
-		readFileFunc = FileReader::ReadAll;
 
 	// Get file directory
 	char currentDirectoryPath[Path::kMaxDirectoryLength];
@@ -516,7 +555,11 @@ int32_t WavefrontObjReader::ReadModelAndMaterials(UnprocessedTriModel** outModel
 				// Read new mesh name
 				if (tokenArray->count > 1)
 				{
-					strcpy(meshes[meshIndex].name, StringHelper::GetTokenAt(tokenArray, 1));
+					const char* source = StringHelper::GetTokenAt(tokenArray, 1);
+					int32_t nameSize = Math::Min(UnprocessedTriMesh::kMaxNameLength-1, (int32_t)strlen(source));
+					memcpy(meshes[meshIndex].name, source, nameSize);
+					meshes[meshIndex].name[nameSize] = 0;
+					meshes[meshIndex].nameHash = efwHash64(meshes[meshIndex].name, nameSize);
 				}
 
 				// Print vertices up to this point
@@ -555,8 +598,11 @@ int32_t WavefrontObjReader::ReadModelAndMaterials(UnprocessedTriModel** outModel
 					bool materialFound = false;
 					while (i<materialLib->materialCount && !materialFound)
 					{
-						if (hash == materialLib->materials[i].id)
+						if (hash == materialLib->materials[i].nameHash)
 						{
+#if defined(_DEBUG)
+							EFW_ASSERT(strcmp(tokenValue, materialLib->materials[i].name) == 0);
+#endif
 							int32_t previousMeshIndex = meshes.size() - 1;
 							meshes[previousMeshIndex].materialId = i;
 							materialFound = true;

@@ -14,23 +14,21 @@
 #pragma once
 
 #include "Foundation/efwPlatform.h"
+#include "Graphics/efwUnprocessedTriMesh.h"
+#include "Graphics/efwUnprocessedMaterial.h"
 
 namespace efw
 {
-
 namespace Graphics
 {
-	// Forward declarations
-	struct UnprocessedTriModel;
-	struct UnprocessedMaterialLib;
-
-	typedef int32_t (*ReadFileFunc_t)(void** outData, int32_t* outSize, const char* filename, int32_t requiredAlignment);
-
 	namespace WavefrontObjReader
 	{
-		int32_t ReadModelAndMaterials(UnprocessedTriModel** outModel, UnprocessedMaterialLib** outMaterialLib, const char* fullFilePath,
-			ReadFileFunc_t customReadFileFunction = NULL);
+		// Read file function declaration
+		typedef int32_t (*ReadFileFunc_t)(void** outData, int32_t* outSize, const char* filename, int32_t requiredAlignment);
 
+		void Release(UnprocessedTriModel* model);
+		void Release(UnprocessedMaterialLib* material);
+		int32_t ReadModelAndMaterials(UnprocessedTriModel** outModel, UnprocessedMaterialLib** outMaterialLib, const char* fullFilePath, ReadFileFunc_t customReadFileFunction);
 		int32_t ReadMaterialLib(UnprocessedMaterialLib** outMaterial, const char* fullFilePath, ReadFileFunc_t readFileFunc);
 
 		// Deprecated
