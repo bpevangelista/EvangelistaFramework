@@ -14,13 +14,18 @@
 #pragma once
 
 #include "Foundation/efwPlatform.h"
+#include <math.h>
 
 namespace efw
 {
 	namespace Math
 	{
-		int32_t Min(int32_t v1, int32_t v2) { return (v1<v2)? v1 : v2; }
-		int32_t Max(int32_t v1, int32_t v2) { return (v1<v2)? v2 : v1; }
+		inline int32_t Min(int32_t v1, int32_t v2) { return (v1<v2)? v1 : v2; }
+		inline int32_t Max(int32_t v1, int32_t v2) { return (v1<v2)? v2 : v1; }
+		inline float Min(float v1, float v2) { return (v1<v2)? v2 : v1; }
+		inline float Max(float v1, float v2) { return (v1<v2)? v2 : v1; }
+
+		inline float Sqrt(float v) { return sqrtf(v); }
 	}
 
 } // efw
