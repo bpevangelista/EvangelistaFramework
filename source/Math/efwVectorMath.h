@@ -19,31 +19,12 @@
 //#define EFW_MATH_SSE
 
 #if defined(EFW_MATH_SSE)
-#define __MMX__
-#define __SSE__
-#define __SSE2__
-#define __SSE3__
-#define __SSSE3__
-#define __SSE4_2__
-
-#ifdef __MMX__
 #include <mmintrin.h>
-#endif
-#ifdef __SSE__
 #include <xmmintrin.h>
-#endif
-#ifdef __SSE2__
 #include <emmintrin.h>
-#endif
-#ifdef __SSE3__
 #include <pmmintrin.h>
-#endif
-#ifdef __SSSE3__
 #include <tmmintrin.h>
-#endif
-#if defined (__SSE4_2__) || defined (__SSE4_1__)
 #include <smmintrin.h>
-#endif
 #if defined(_WIN32)
 #include <intrin.h>
 #endif
@@ -65,15 +46,13 @@ namespace Math
 #else
 		typedef const Vec3f& Vec3fRef;
 #endif
-
+		static const Vec3f kZero;
+		
 		Vec3f();
-		Vec3f(float);
 		Vec3f(float X, float Y, float Z);
-		Vec3f(const float*);
 		Vec3f(const Vec3f&);
-
-		operator float* ();
-		operator const float* () const;
+		explicit Vec3f(float);
+		explicit Vec3f(const float*);
 
 		Vec3f& operator += (Vec3fRef);
 		Vec3f& operator -= (Vec3fRef);
@@ -93,6 +72,7 @@ namespace Math
 		Vec3f operator / (float) const;
 
 		friend Vec3f operator * (float, Vec3fRef);
+		friend Vec3f operator / (float, Vec3fRef);
 
 		bool operator == (Vec3fRef v) const;
 		bool operator != (Vec3fRef v) const;
@@ -142,7 +122,7 @@ namespace Math
 
 	EFW_INLINE Vec3f::Vec3f(const float* ptr)
 	{
-		EFW_MATH_ASSERT( ((&V[0]) % 16) == 0);
+		EFW_MATH_ASSERT( (((int32_t)ptr) % 16) == 0 );
 		EFW_MATH_ASSERT( IsFinite(ptr[0]) && IsFinite(ptr[1]) && IsFinite(ptr[2]) );
 
 #if defined(EFW_MATH_SSE)
@@ -160,22 +140,6 @@ namespace Math
 		v[0] = vec.v[0];
 		v[1] = vec.v[1];
 		v[2] = vec.v[2];
-#endif
-	}
-
-	EFW_INLINE Vec3f::operator float* ()
-	{
-#if defined(EFW_MATH_SSE)
-#else
-		return &v[0];
-#endif
-	}
-
-	EFW_INLINE Vec3f::operator const float* () const
-	{
-#if defined(EFW_MATH_SSE)
-#else
-		return &v[0];
 #endif
 	}
 
@@ -205,9 +169,9 @@ namespace Math
 	{
 #if defined(EFW_MATH_SSE)
 #else
-		v[0] *= vec[0];
-		v[1] *= vec[1];
-		v[2] *= vec[2];
+		v[0] *= vec.v[0];
+		v[1] *= vec.v[1];
+		v[2] *= vec.v[2];
 #endif
 		return *this;
 	}
@@ -319,6 +283,14 @@ namespace Math
 #endif
 	}
 
+	EFW_INLINE Vec3f operator / (float value, Vec3fRef vec)
+	{
+		#if defined(EFW_MATH_SSE)
+#else
+		return Vec3f(value) / vec;
+#endif
+	}
+	
 	EFW_INLINE bool Vec3f::operator == (Vec3fRef vec) const
 	{
 #if defined(EFW_MATH_SSE)
@@ -359,45 +331,47 @@ namespace Math
 #endif
 	}
 
-	bool Vec3IsValid(Vec3fRef v)
+	bool Vec3IsValid(Vec3fRef vec)
 	{
 #if defined(EFW_MATH_SSE)
 		EFW_ALIGNED_TYPE(16, float) values[4];
 		_mm_store_ss(&values[0], v);
 		return ( IsFinite(values[0]) && IsFinite(values[1]) && IsFinite(values[2]) );
 #else
-		return ( IsFinite(v[0]) && IsFinite(v[1]) && IsFinite(v[2]) );
+		return ( IsFinite(vec.v[0]) && IsFinite(vec.v[1]) && IsFinite(vec.v[2]) );
 #endif
 	}
 
-	EFW_INLINE Vec3f Vec3Length(Vec3fRef v)
+	EFW_INLINE Vec3f Vec3Length(Vec3fRef vec)
 	{
 #if defined(EFW_MATH_SSE)
 #else
-		return Math::Sqrt( Vec3Dot(v, v)[0] );
+		float result = Math::Sqrt( Vec3Dot(vec, vec).v[0] );
+		return Vec3f(result);
 #endif
 	}
 
-	EFW_INLINE Vec3f Vec3LengthSquared(Vec3fRef v)
+	EFW_INLINE Vec3f Vec3LengthSquared(Vec3fRef vec)
 	{
 #if defined(EFW_MATH_SSE)
 #else
-		return Vec3Dot(v, v);
+		return Vec3Dot(vec, vec);
 #endif
 	}
 	
-	EFW_INLINE Vec3f Vec3Normalize(Vec3fRef v)
+	EFW_INLINE Vec3f Vec3Normalize(Vec3fRef vec)
 	{
 #if defined(EFW_MATH_SSE)
 #else
 		float invLength = 0.0f;
-		float lengthSquared = Vec3LengthSquared(v)[0];
+		float lengthSquared = Vec3LengthSquared(vec).v[0];
 
 		if (lengthSquared > 0.0f)
 		{
 			float invLength = 1.0f / Math::Sqrt(lengthSquared);
 		}
-		return Vec3f(v[0] * invLength, v[1] * invLength, v[2] * invLength);
+
+		return vec * invLength;
 #endif
 	}
 
@@ -406,7 +380,7 @@ namespace Math
 #if defined(EFW_MATH_SSE)
 #else
 		float result = vec1.v[0] * vec2.v[0] + vec1.v[1] * vec2.v[1] + vec1.v[2] * vec2.v[2];
-		return Vec3f(result, result, result);
+		return Vec3f(result);
 #endif
 	}
 
@@ -414,7 +388,7 @@ namespace Math
 	{
 #if defined(EFW_MATH_SSE)
 #else
-		return (vec1.v[1] * vec2.v[2] - vec1.v[2] * vec2.v[1],
+		return Vec3f(vec1.v[1] * vec2.v[2] - vec1.v[2] * vec2.v[1],
 			vec1.v[2] * vec2.v[0] - vec1.v[0] * vec2.v[2],
 			vec1.v[0] * vec2.v[1] - vec1.v[1] * vec2.v[0] );
 #endif
@@ -454,7 +428,7 @@ namespace Math
 	{
 #if defined(EFW_MATH_SSE)
 #else
-		return (vec1.v[0] + factor * (vec2.v[0] - vec1.v[0]),
+		return Vec3f(vec1.v[0] + factor * (vec2.v[0] - vec1.v[0]),
 			vec1.v[1] + factor * (vec2.v[1] - vec1.v[1]),
 			vec1.v[2] + factor * (vec2.v[2] - vec1.v[2]) );
 #endif
