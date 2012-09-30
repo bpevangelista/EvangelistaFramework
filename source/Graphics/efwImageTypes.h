@@ -1,15 +1,15 @@
 /**
+ * Copyright (C) 2012 Bruno P. Evangelista. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  * 
- * @author Bruno Evangelista
- *
- * THIS SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
- * IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
- * CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
- * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+ * THIS SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT
+ * LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+ * IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE 
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- *
  */
 #pragma once
 
@@ -47,7 +47,7 @@ namespace Graphics
 		const int32_t kPixelFormatFourCC_DXT5 = MAKE_FOURCC('D','X','T','5');
 		const int32_t kPixelFormatFourCC_DX10 = MAKE_FOURCC('D','X','1','0');
 
-		PACKED(struct PixelFormatHeader
+		EFW_PACKED_BEGIN struct PixelFormatHeader
 		{
 			int32_t size;
 			int32_t flags;
@@ -57,9 +57,9 @@ namespace Graphics
 			int32_t greenBitMask;
 			int32_t blueBitMask;
 			int32_t alphaBitMask;
-		});
+		} EFW_PACKED_END;
 
-		PACKED(struct Header
+		EFW_PACKED_BEGIN struct Header
 		{
 			int32_t signature;
 			int32_t size;
@@ -76,24 +76,23 @@ namespace Graphics
 			int32_t caps3;
 			int32_t caps4;
 			int32_t _reserved2;
-		});
+		} EFW_PACKED_END;
 
-		PACKED(struct DX10Header
+		EFW_PACKED_BEGIN struct DX10Header
 		{
 			int32_t dxgiFormat;
 			int32_t resourceDimension;
 			int32_t miscFlag;
 			int32_t arraySize;
 			int32_t reserved;
-		});
+		} EFW_PACKED_END;
 
 		int32_t GetTextureFormat(Header* ddsHeader);
-
 	} // DDS
 
 	namespace ImageTGA
 	{
-		PACKED( struct Header
+		EFW_PACKED_BEGIN struct Header
 		{
 			uint8_t identsize;          // size of ID field that follows 18 byte header (0 usually)
 			uint8_t colourmaptype;      // type of colour map 0=none, 1=has palette
@@ -109,7 +108,7 @@ namespace Graphics
 			uint16_t height;             // image height in pixels
 			uint8_t bits;                // image bits per pixel 8,16,24,32
 			uint8_t descriptor;          // image descriptor bits (vh flip bits)
-		} );
+		} EFW_PACKED_END;
 
 		int32_t GetTextureFormat(Header* tgaHeader);
 
