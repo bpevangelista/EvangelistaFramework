@@ -37,11 +37,13 @@ namespace efw
 		EFW_INLINE uint32_t Max(uint32_t v1, uint32_t v2) { return (v1<v2)? v2 : v1; }
 		EFW_INLINE int32_t Min(int32_t v1, int32_t v2) { return (v1<v2)? v1 : v2; }
 		EFW_INLINE int32_t Max(int32_t v1, int32_t v2) { return (v1<v2)? v2 : v1; }
-		EFW_INLINE float Min(float v1, float v2) { return (v1<v2)? v2 : v1; }
+		EFW_INLINE float Min(float v1, float v2) { return (v1<v2)? v1 : v2; }
 		EFW_INLINE float Max(float v1, float v2) { return (v1<v2)? v2 : v1; }
 
 		EFW_INLINE int32_t Abs(int32_t v) { return abs(v); }
 		EFW_INLINE float Abs(float v) { return fabs(v); }
+		EFW_INLINE float Ceil(float v) { return ceilf(v); }
+		EFW_INLINE float Floor(float v) { return floorf(v); }
 		EFW_INLINE float Sqrt(float v) { return sqrtf(v); }
 
 		EFW_INLINE bool IsNumber(float b) { return (b == b); }
