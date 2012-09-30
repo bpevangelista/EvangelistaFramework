@@ -84,16 +84,20 @@ namespace Math
 	};
 
 	// 
-	bool Vec3IsValid(Vec3fRef v);
-	Vec3f Vec3Abs(Vec3fRef v);
-	Vec3f Vec3Length(Vec3fRef v);
-	Vec3f Vec3LengthSquared(Vec3fRef v);
-	Vec3f Vec3Normalize(Vec3fRef v);
+	bool Vec3IsValid(Vec3fRef vec);
+	Vec3f Vec3Length(Vec3fRef vec);
+	Vec3f Vec3LengthSquared(Vec3fRef vec);
+	Vec3f Vec3Normalize(Vec3fRef vec);
 	Vec3f Vec3Dot(Vec3fRef vec1, Vec3fRef vec2);
 	Vec3f Vec3Cross(Vec3fRef vec1, Vec3fRef vec2);
+
+	Vec3f Vec3Abs(Vec3fRef vec);
+	Vec3f Vec3Ceil(Vec3fRef vec);
+	Vec3f Vec3Floor(Vec3fRef vec);
 	Vec3f Vec3Min(Vec3fRef vec1, Vec3fRef vec2);
 	Vec3f Vec3Max(Vec3fRef vec1, Vec3fRef vec2);
 	Vec3f Vec3Lerp(Vec3fRef vec1, Vec3fRef vec2, float factor);
+	void Vec3GetFloats(float* out, Vec3fRef vec);
 
 	// Inline file
 	#include "efwVectorMath-inl.h"

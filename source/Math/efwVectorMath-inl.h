@@ -237,7 +237,7 @@ EFW_INLINE float Vec3f::Z() const
 #endif
 }
 
-bool Vec3IsValid(Vec3fRef vec)
+EFW_INLINE bool Vec3IsValid(Vec3fRef vec)
 {
 #if defined(EFW_MATH_SSE)
 	EFW_ALIGNED_TYPE(16, float) values[4];
@@ -308,6 +308,22 @@ EFW_INLINE Vec3f Vec3Abs(Vec3fRef vec)
 #endif
 }
 
+EFW_INLINE Vec3f Vec3Ceil(Vec3fRef vec)
+{
+#if defined(EFW_MATH_SSE)
+#else
+	return Vec3f(Math::Ceil(vec.v[0]), Math::Ceil(vec.v[1]), Math::Ceil(vec.v[2]));
+#endif
+}
+
+EFW_INLINE Vec3f Vec3Floor(Vec3fRef vec)
+{
+#if defined(EFW_MATH_SSE)
+#else
+	return Vec3f(Math::Floor(vec.v[0]), Math::Floor(vec.v[1]), Math::Floor(vec.v[2]));
+#endif
+}
+
 EFW_INLINE Vec3f Vec3Min(Vec3fRef vec1, Vec3fRef vec2)
 {
 #if defined(EFW_MATH_SSE)
@@ -337,5 +353,16 @@ EFW_INLINE Vec3f Vec3Lerp(Vec3fRef vec1, Vec3fRef vec2, float factor)
 	return Vec3f(vec1.v[0] + factor * (vec2.v[0] - vec1.v[0]),
 		vec1.v[1] + factor * (vec2.v[1] - vec1.v[1]),
 		vec1.v[2] + factor * (vec2.v[2] - vec1.v[2]) );
+#endif
+}
+
+EFW_INLINE void Vec3GetFloats(float* out, Vec3fRef vec)
+{
+	EFW_MATH_ASSERT(out != NULL);
+#if defined(EFW_MATH_SSE)
+#else
+	out[0] = vec.v[0];
+	out[1] = vec.v[1];
+	out[2] = vec.v[2];
 #endif
 }
