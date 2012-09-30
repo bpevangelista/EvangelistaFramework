@@ -1,15 +1,15 @@
 /**
- * Platform and compiler code
- * @author Bruno Evangelista
+ * Copyright (C) 2012 Bruno P. Evangelista. All rights reserved.
  *
- * THIS SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
- * IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
- * CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
- * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
- * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  * 
+ * THIS SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT
+ * LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+ * IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE 
+ * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 #pragma once
 
@@ -27,13 +27,17 @@
 #include <stdlib.h>
 
 #if defined _MSC_VER
-#define INLINE inline
-INLINE void* memalign(size_t alignment, size_t size) { return _aligned_malloc(size, alignment); }
-INLINE void freealign(void* address) { _aligned_free(address); }
-#define PACKED( _DECL ) __pragma( pack(push, 1) ) _DECL __pragma( pack(pop) )
+#define EFW_INLINE inline
+EFW_INLINE void* memalign(size_t alignment, size_t size) { return _aligned_malloc(size, alignment); }
+EFW_INLINE void freealign(void* address) { _aligned_free(address); }
+#define EFW_PACKED_BEGIN __pragma(pack(push,1))
+#define EFW_PACKED_END __pragma(pack(pop))
+#define EFW_ALIGNED_TYPE(_ALIGN_BYTES, _TYPE) __declspec(align(_ALIGN_BYTES)) _TYPE
 #elif defined __GNUC__
-#define PACKED( _DECL ) _DECL __attribute__((packed))
-#define INLINE inline
+#define EFW_INLINE inline
+#define EFW_PACKED_BEGIN
+#define EFW_PACKED_END __attribute__((packed))
+#define EFW_ALIGNED_TYPE(_ALIGN_BYTES, _TYPE) _TYPE __attribute__((aligned(_ALIGN_BYTES)))
 #else
 #error Compiled not defined!
 #endif
