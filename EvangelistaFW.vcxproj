@@ -20,6 +20,7 @@
     <ClCompile Include="source\Graphics\efwTextureReader.cpp" />
     <ClCompile Include="source\Graphics\efwUnprocessedTriMeshHelper.cpp" />
     <ClCompile Include="source\Graphics\efwWavefronObjReader.cpp" />
+    <ClCompile Include="source\Math\efwVectorMath.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="source\Foundation\efwConsole.h" />
@@ -37,6 +38,7 @@
     <ClInclude Include="source\Graphics\efwUnprocessedTriMeshHelper.h" />
     <ClInclude Include="source\Graphics\efwWavefrontObjReader.h" />
     <ClInclude Include="source\Graphics\efwImageTypes.h" />
+    <ClInclude Include="source\Math\efwVectorMath-inl.h" />
     <ClInclude Include="source\Math\efwVectorMath.h" />
     <ClInclude Include="source\Math\efwMath.h" />
   </ItemGroup>
@@ -84,6 +86,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>Source</AdditionalIncludeDirectories>
+      <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
