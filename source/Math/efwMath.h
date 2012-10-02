@@ -43,6 +43,7 @@ namespace efw
 		EFW_INLINE int32_t Abs(int32_t v) { return abs(v); }
 		EFW_INLINE float Abs(float v) { return fabs(v); }
 		EFW_INLINE float Ceil(float v) { return ceilf(v); }
+		EFW_INLINE float Clamp(float v, float min, float max) { return Math::Max( Math::Min(v, max), min); }
 		EFW_INLINE float Floor(float v) { return floorf(v); }
 		EFW_INLINE float Sqrt(float v) { return sqrtf(v); }
 
