@@ -42,9 +42,9 @@ namespace Graphics
 		const int32_t kTangentPlane_Average				= 1<<2;
 		const int32_t kTangentPlane_AverageUniques		= 1<<3;
 
-		const int32_t kUvw_Exact						= 1<<4;
-		const int32_t kUvw_Average						= 1<<5;
-		const int32_t kUvw_AveragaUniques				= 1<<6;
+		const int32_t kUvw0_Exact						= 1<<4;
+		const int32_t kUvw0_Average						= 1<<5;
+		const int32_t kUvw0_AveragaUniques				= 1<<6;
 	}
 
 

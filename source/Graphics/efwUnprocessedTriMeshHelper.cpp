@@ -168,7 +168,7 @@ void UnprocessedTriMeshHelper::MergeDuplicatedVertices(UnprocessedTriMesh* mesh,
 	float* positions = (float*)( (uint8_t*)mesh->vertexData + mesh->vertexAttributes[VertexAttributes::kPosition].offset );
 	float* normals = (mesh->vertexAttributes[VertexAttributes::kNormal].componentCount == 0 || (mergeDuplicateFlags & MergeVertexFlags::kTangentPlane_Exact) == 0)? NULL :
 		(float*)( (uint8_t*)mesh->vertexData + mesh->vertexAttributes[VertexAttributes::kNormal].offset );
-	float* uvs = (mesh->vertexAttributes[VertexAttributes::kUv0].componentCount == 0 || (mergeDuplicateFlags & MergeVertexFlags::kUvw_Exact) == 0)? NULL :
+	float* uvs = (mesh->vertexAttributes[VertexAttributes::kUv0].componentCount == 0 || (mergeDuplicateFlags & MergeVertexFlags::kUvw0_Exact) == 0)? NULL :
 		(float*)( (uint8_t*)mesh->vertexData + mesh->vertexAttributes[VertexAttributes::kUv0].offset );
 
 	// Split vertex indices into octree-buckets
@@ -235,18 +235,15 @@ void UnprocessedTriMeshHelper::MergeDuplicatedVertices(UnprocessedTriMesh* mesh,
 				float* normal = (normals != NULL)? &normals[index*vertexComponents] : NULL;
 				float* uv0 = (uvs != NULL)? &uvs[index*vertexComponents] : NULL;
 				
-				// check if position[j] == position[k] (using some EPSILON)
-				// if so add new position = (position[j]+position[k])/2
-				// Here we also handle Normal, Tagent and Uv differences
-				
-				// TODO Check for normals to average
-				// TODO
-				
+				// TODO Add pass tangent and binormal
 				Vec3f distanceSquared = Vec3LengthSquared(position - testPosition);
-				if (distanceSquared.X() < (positionDeltaThreashold*positionDeltaThreashold) &&
-					(normals == NULL || (testNormal[0] == normal[0] && testNormal[1] == normal[1] && testNormal[2] == normal[2])) &&
-					(uvs == NULL || (testUv0[0] == uv0[0] && testUv0[1] == uv0[1]))
-					)
+				bool passPosition = (distanceSquared.X() < (positionDeltaThreashold*positionDeltaThreashold));
+				bool passNormal = (normals == NULL || 
+					(Math::Abs(testNormal[0]-normal[0]) <= Math::kEpsilon && Math::Abs(testNormal[1]-normal[1]) <= Math::kEpsilon && Math::Abs(testNormal[2]-normal[2]) <= Math::kEpsilon) );
+				bool passUv0 = (uvs == NULL || (Math::Abs(testUv0[0] - uv0[0]) <= Math::kEpsilon && 
+					Math::Abs(testUv0[1] - uv0[1]) <= Math::kEpsilon) );
+				
+				if (passPosition && passNormal && passUv0)
 				{
 					duplicates[testIndex].push_back(index);
 					duplicates[index].push_back(testIndex);
@@ -279,11 +276,13 @@ void UnprocessedTriMeshHelper::MergeDuplicatedVertices(UnprocessedTriMesh* mesh,
 			if (usedTable[vertexIndex])
 				continue;
 
-			// TODO Improve this
 			// Add data from current vertex to the global one
 			float* meshVertexData = (float*)mesh->vertexData;
 			for (int32_t k=0; k<vertexComponents; ++k)
+			{
+				// TODO Improve this to handle average unique 
 				newVertexData[newVertexCount*vertexComponents+k] += meshVertexData[vertexIndex*vertexComponents+k];
+			}
 
 			// Create remap for index
 			indexMap.insert( std::pair<uint32_t, uint32_t>(vertexIndex, newVertexCount) );
@@ -325,7 +324,7 @@ void UnprocessedTriMeshHelper::MergeDuplicatedVertices(UnprocessedTriMesh* mesh,
 		uint32_t* indices = (uint32_t*)mesh->indexData;
 		for (int32_t i=0; i<mesh->indexCount; ++i)
 		{
-			uint16_t currentIndex = indices[i];
+			uint32_t currentIndex = indices[i];
 			indices[i] = indexMap[currentIndex];
 		}
 	}
