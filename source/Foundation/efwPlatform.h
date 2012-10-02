@@ -89,14 +89,9 @@ namespace Path
 // Generic types
 namespace efwErrs
 {
-enum efwErr
-{
-	kOk,
-	kCorruptedData,
-	kInvalidInput,
-	kInvalidState,
-	kOperationFailed
-};
+	const int32_t kOk = 0;
+	const int32_t kCorruptedData = 1;
+	const int32_t kInvalidInput = 2;
+	const int32_t kInvalidState = 3;
+	const int32_t kOperationFailed = 4;
 }
-
-typedef efwErrs::efwErr efwErr;
