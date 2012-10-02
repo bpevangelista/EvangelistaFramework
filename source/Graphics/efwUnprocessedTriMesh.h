@@ -68,6 +68,10 @@ namespace Graphics
 		int32_t indexCount;
 		void* vertexData;
 		void* indexData;
+		
+		// User custom data
+		int32_t customUserDataSize;
+		void* customUserData;
 
 		static const int32_t kMaxNameLength = 64;
 		int64_t nameHash;

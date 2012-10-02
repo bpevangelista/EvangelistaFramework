@@ -40,6 +40,7 @@ void WavefrontObjReader::Release(UnprocessedTriModel* model)
 
 	for (int32_t i=0; i < model->meshCount; ++i)
 	{
+		SAFE_ALIGNED_FREE(model->meshes[i].customUserData);
 		SAFE_ALIGNED_FREE(model->meshes[i].vertexData);
 		SAFE_ALIGNED_FREE(model->meshes[i].indexData);
 	}
@@ -248,6 +249,9 @@ int32_t GenerateMesh(UnprocessedTriMesh* outMesh, const WavefrontObjVertexAttrib
 		// TODO
 		return efwErrs::kInvalidInput;
 	}
+
+	// Initialize mesh data to zero
+	memset(outMesh, 0, sizeof(UnprocessedTriMesh));
 
 	if (strcmp(outMesh->name, "") == 0)
 	{
