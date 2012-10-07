@@ -95,29 +95,6 @@ EFW_INLINE Vec3f& Vec3f::operator /= (Vec3fRef vec)
 	return *this;
 }
 
-EFW_INLINE Vec3f& Vec3f::operator *= (float value)
-{
-#if defined(EFW_MATH_SSE)
-#else
-	v[0] *= value;
-	v[1] *= value;
-	v[2] *= value;
-#endif
-	return *this;
-}
-
-EFW_INLINE Vec3f& Vec3f::operator /= (float value)
-{
-#if defined(EFW_MATH_SSE)
-#else
-	float inverseValue = 1.0f / value;
-	v[0] *= inverseValue;
-	v[1] *= inverseValue;
-	v[2] *= inverseValue;
-#endif
-	return *this;
-}
-
 EFW_INLINE Vec3f Vec3f::operator + () const
 {
 	return *this;
@@ -160,24 +137,6 @@ EFW_INLINE Vec3f Vec3f::operator / (Vec3fRef vec) const
 #if defined(EFW_MATH_SSE)
 #else
 	return Vec3f(v[0] / vec.v[0], v[1] / vec.v[1], v[2] / vec.v[2]);
-#endif
-}
-
-EFW_INLINE Vec3f Vec3f::operator * (float value) const
-{
-#if defined(EFW_MATH_SSE)
-#else
-	return Vec3f(v[0] * value, v[1] * value, v[2] * value);
-#endif
-}
-
-EFW_INLINE Vec3f Vec3f::operator / (float value) const
-{
-	EFW_MATH_ASSERT(value != 0);
-#if defined(EFW_MATH_SSE)
-#else
-	float inverseValue = 1.0f / value;
-	return Vec3f(v[0] * inverseValue, v[1] * inverseValue, v[2] * inverseValue);
 #endif
 }
 
@@ -277,7 +236,7 @@ EFW_INLINE Vec3f Vec3Normalize(Vec3fRef vec)
 		float invLength = 1.0f / Math::Sqrt(lengthSquared);
 	}
 
-	return vec * invLength;
+	return vec * Vec3f(invLength);
 #endif
 }
 

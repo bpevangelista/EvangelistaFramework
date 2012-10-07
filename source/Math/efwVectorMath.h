@@ -30,10 +30,12 @@
 #endif
 typedef __m128 EFW_INTERNAL_VECTOR128;
 typedef EFW_INTERNAL_VECTOR128 Vec3fRef;
+typedef EFW_INTERNAL_VECTOR128 Vec4fRef;
 #else
 typedef float EFW_INTERNAL_VECTOR128[4];
-namespace efw{ namespace Math { struct Vec3f; } }
+namespace efw{ namespace Math { struct Vec3f; struct Vec4f; } }
 typedef const efw::Math::Vec3f& Vec3fRef;
+typedef const efw::Math::Vec4f& Vec4fRef;
 #endif
 
 namespace efw
@@ -55,8 +57,6 @@ namespace Math
 		Vec3f& operator -= (Vec3fRef);
 		Vec3f& operator *= (Vec3fRef);
 		Vec3f& operator /= (Vec3fRef);
-		Vec3f& operator *= (float);
-		Vec3f& operator /= (float);
 
 		Vec3f operator + () const;
 		Vec3f operator - () const;
@@ -65,11 +65,6 @@ namespace Math
 		Vec3f operator - (Vec3fRef) const;
 		Vec3f operator * (Vec3fRef) const;
 		Vec3f operator / (Vec3fRef) const;
-		Vec3f operator * (float) const;
-		Vec3f operator / (float) const;
-
-		friend Vec3f operator * (float, Vec3fRef);
-		friend Vec3f operator / (float, Vec3fRef);
 
 		bool operator == (Vec3fRef v) const;
 		bool operator != (Vec3fRef v) const;
@@ -82,6 +77,43 @@ namespace Math
 		// Static
 		static const Vec3f kZero;
 	};
+
+	/*
+	EFW_ALIGNED_TYPE(16, struct) Vec4f
+	{
+		EFW_INTERNAL_VECTOR128 v;
+
+		Vec4f();
+		Vec4f(float X, float Y, float Z, float W);
+		Vec4f(const Vec4f&);
+		explicit Vec4f(float);
+		explicit Vec4f(const float*);
+
+		Vec4f& operator += (Vec4fRef);
+		Vec4f& operator -= (Vec4fRef);
+		Vec4f& operator *= (Vec4fRef);
+		Vec4f& operator /= (Vec4fRef);
+
+		Vec4f operator + () const;
+		Vec4f operator - () const;
+
+		Vec4f operator + (Vec4fRef) const;
+		Vec4f operator - (Vec4fRef) const;
+		Vec4f operator * (Vec4fRef) const;
+		Vec4f operator / (Vec4fRef) const;
+
+		bool operator == (Vec4fRef v) const;
+		bool operator != (Vec4fRef v) const;
+
+		// Slow single component access
+		float X() const;
+		float Y() const;
+		float Z() const;
+
+		// Static
+		static const Vec3f kZero;
+	};
+	*/
 
 	// 
 	bool Vec3IsValid(Vec3fRef vec);
