@@ -95,3 +95,13 @@ namespace efwErrs
 	const int32_t kInvalidState = 3;
 	const int32_t kOperationFailed = 4;
 }
+
+namespace efw
+{
+	class NonCopyable
+	{
+	private:
+		NonCopyable(const NonCopyable& ref) {}
+		NonCopyable& operator = (const NonCopyable& ref) {}
+	};
+}
