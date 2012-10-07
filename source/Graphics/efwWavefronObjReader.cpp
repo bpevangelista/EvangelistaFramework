@@ -487,6 +487,12 @@ int32_t WavefrontObjReader::ReadModelAndMaterials(UnprocessedTriModel** outModel
 	vector<uint64_t> currentVertexIndexToAttributes;
 	// Each element maps attributes of one vertex to its index
 	map<uint64_t, int32_t> currentVertexAttributesToIndex;
+	// Stores the name of the last specified group
+	char currentMeshName[UnprocessedTriMesh::kMaxNameLength];
+	memset(currentMeshName, 0, EFW_COUNTOF(currentMeshName));
+	// Stores the index of the last specified material
+	int32_t currentMeshMaterialId = -1;
+
 	vector<UnprocessedTriMesh> meshes;
 	UnprocessedMaterialLib* materialLib = NULL;
 
@@ -498,7 +504,6 @@ int32_t WavefrontObjReader::ReadModelAndMaterials(UnprocessedTriModel** outModel
 	currentVertexIndexToAttributes.reserve(kVertexAttributesReserveSize);
 	const uint32_t kMeshesReserveSize = 64;
 	meshes.reserve(kMeshesReserveSize);
-	meshes.resize(meshes.size() + 1);
 
 	// Reset global line counter
 	gModelInputLineCount = 0;
@@ -537,18 +542,22 @@ int32_t WavefrontObjReader::ReadModelAndMaterials(UnprocessedTriModel** outModel
 			// Group (everything from this point until the next group or EOF belongs to this group
 		case 'g':
 			{
-				int32_t meshIndex = meshes.size() - 1;
-
 				// Checks whether there are index information from a previous mesh before starting a new group.
 				if (currentIndexData.size() > 0)
 				{
 					DebugPrintFacesInfo(currentVertexIndexToAttributes);
 
-					GenerateMesh(&meshes[meshIndex], vertexAttributes, currentVertexIndexToAttributes, currentIndexData);
-					DebugPrintMeshInfo(meshes[meshIndex]);
-
+					int32_t meshIndex = meshes.size();
 					meshes.resize(meshes.size() + 1);
-					meshIndex++;
+					GenerateMesh(&meshes[meshIndex], vertexAttributes, currentVertexIndexToAttributes, currentIndexData);
+					
+					// Others
+					meshes[meshIndex].materialId = currentMeshMaterialId;
+					memcpy(meshes[meshIndex].name, currentMeshName, UnprocessedTriMesh::kMaxNameLength);
+					meshes[meshIndex].nameHash = efwHash64(meshes[meshIndex].name, strlen(meshes[meshIndex].name));
+					memset(currentMeshName, 0, EFW_COUNTOF(currentMeshName));
+
+					DebugPrintMeshInfo(meshes[meshIndex]);
 				}
 
 				// Clear previous data
@@ -559,11 +568,10 @@ int32_t WavefrontObjReader::ReadModelAndMaterials(UnprocessedTriModel** outModel
 				// Read new mesh name
 				if (tokenArray->count > 1)
 				{
-					const char* source = StringHelper::GetTokenAt(tokenArray, 1);
-					int32_t nameSize = Math::Min(UnprocessedTriMesh::kMaxNameLength-1, (int32_t)strlen(source));
-					memcpy(meshes[meshIndex].name, source, nameSize);
-					meshes[meshIndex].name[nameSize] = 0;
-					meshes[meshIndex].nameHash = efwHash64(meshes[meshIndex].name, nameSize);
+					const char* meshName = StringHelper::GetTokenAt(tokenArray, 1);
+					int32_t nameSize = Math::Min(UnprocessedTriMesh::kMaxNameLength-1, (int32_t)strlen(meshName));
+					memcpy(currentMeshName, meshName, nameSize);
+					currentMeshName[nameSize] = 0;
 				}
 
 				// Print vertices up to this point
@@ -593,8 +601,8 @@ int32_t WavefrontObjReader::ReadModelAndMaterials(UnprocessedTriModel** outModel
 			// Material (usemtl)
 		case 'u':
 			{
-				if (tokenArray->count > 1 && (strcmp(tokenKey, "usemtl") == 0) &&
-					materialLib != NULL && meshes.size() > 0)
+				if (materialLib != NULL &&
+					tokenArray->count > 1 && (strcmp(tokenKey, "usemtl") == 0))
 				{
 					int64_t hash = efwHash64(tokenValue, strlen(tokenValue));
 					
@@ -604,12 +612,9 @@ int32_t WavefrontObjReader::ReadModelAndMaterials(UnprocessedTriModel** outModel
 					{
 						if (hash == materialLib->materials[i].nameHash)
 						{
-#if defined(_DEBUG)
 							EFW_ASSERT(strcmp(tokenValue, materialLib->materials[i].name) == 0);
-#endif
-							int32_t previousMeshIndex = meshes.size() - 1;
-							meshes[previousMeshIndex].materialId = i;
 							materialFound = true;
+							currentMeshMaterialId = i;
 						}
 
 						i++;
@@ -643,25 +648,17 @@ int32_t WavefrontObjReader::ReadModelAndMaterials(UnprocessedTriModel** outModel
 	// 
 	if (currentIndexData.size() > 0)
 	{
-		if (meshes.size() == 0)
-		{
-			// A group was never started
-		}
+		int32_t meshIndex = meshes.size();
+		meshes.resize(meshes.size()+1);
+		GenerateMesh(&meshes[meshIndex], vertexAttributes, currentVertexIndexToAttributes, currentIndexData);
+		
+		// Others
+		memcpy(meshes[meshIndex].name, currentMeshName, UnprocessedTriMesh::kMaxNameLength);
+		meshes[meshIndex].nameHash = efwHash64(meshes[meshIndex].name, strlen(meshes[meshIndex].name));
+		meshes[meshIndex].materialId = currentMeshMaterialId;
+		memset(currentMeshName, 0, EFW_COUNTOF(currentMeshName));
 
-		int32_t previousMeshIndex = meshes.size() - 1;
-		GenerateMesh(&meshes[previousMeshIndex], vertexAttributes, currentVertexIndexToAttributes, currentIndexData);
-
-		DebugPrintMeshInfo(meshes[previousMeshIndex]);
-	}
-
-	// Check if last mesh is empty
-	else if (meshes.size() > 0)
-	{
-		int32_t meshIndex = meshes.size() - 1;
-		if (meshes[meshIndex].indexCount == 0)
-		{
-			meshes.pop_back();
-		}
+		DebugPrintMeshInfo(meshes[meshIndex]);
 	}
 
 	StringHelper::DestroyTokenArray(&tokenArray);
