@@ -23,6 +23,7 @@
     <ClCompile Include="source\Math\efwVectorMath.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="efwPointerTypes.h" />
     <ClInclude Include="source\Foundation\efwConsole.h" />
     <ClInclude Include="source\Foundation\efwFile.h" />
     <ClInclude Include="source\Foundation\efwFileReader.h" />
@@ -104,6 +105,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>Source</AdditionalIncludeDirectories>
+      <TreatWarningAsError>true</TreatWarningAsError>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
