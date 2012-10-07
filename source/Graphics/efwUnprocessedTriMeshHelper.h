@@ -36,6 +36,23 @@ namespace Graphics
 		float radius;
 	};
 
+	namespace AttributeCompressions
+	{
+		enum AttributeCompression
+		{
+			kSFloatNormToU8Norm,
+			kSFloatNormToU16Norm,
+			kUFloatNormToU8Norm,
+			kUFloatNormToU16Norm,
+			kSFloatToU8NormWithScaleAndBias,
+			kSFloatToU16NormWithScaleAndBias,
+			kUFloatToU8NormWithScaleAndBias,
+			kUFloatToU16NormWithScaleAndBias,
+
+			kCount
+		};
+	}
+
 	namespace MergeVertexFlags
 	{
 		const int32_t kTangentPlane_Exact				= 1<<1;
@@ -50,12 +67,14 @@ namespace Graphics
 
 	namespace UnprocessedTriMeshHelper
 	{
-		void GenerateAABoundingBox(AABoundingBox* outBoudingBox, const UnprocessedTriMesh& mesh);
-
+		int32_t GenerateAABoundingBox(AABoundingBox* outBoudingBox, const UnprocessedTriMesh& mesh);
 		void GenerateBoundingSphere(float* outBoudingSphere, const UnprocessedTriMesh& mesh);
 		void MergeBoundingSphere(float* outBoudingSphere, const float* boudingSphere1, const float* boudingSphere2);
 
-		void MergeDuplicatedVertices(UnprocessedTriMesh* mesh, float positionDeltaThreashold, int32_t mergeDuplicateFlags);
+		int32_t MergeDuplicatedVertices(UnprocessedTriMesh* mesh, float positionDeltaThreashold, int32_t mergeDuplicateFlags);
+
+		int32_t CompressVertexAttribute(void** outData, const float* vertexData, int32_t vertexStride, int32_t vertexCount, UnprocessedTriMeshVertexAttribute attribute, 
+			int32_t attributeCompression, float* outPerComponentScale = NULL, float* outPerComponentBias = NULL);
 	}
 }
 

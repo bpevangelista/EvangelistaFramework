@@ -1,3 +1,4 @@
+#include "Foundation/efwPointerTypes.h"
 #include "Graphics/efwUnprocessedTriMeshHelper.h"
 #include "Graphics/efwUnprocessedTriMesh.h"
 #include "Math/efwMath.h"
@@ -7,37 +8,46 @@
 #include <map>
 #include <vector>
 
+using namespace efw;
 using namespace efw::Graphics;
 using namespace efw::Math;
 
-void UnprocessedTriMeshHelper::GenerateAABoundingBox(AABoundingBox* out, const UnprocessedTriMesh& mesh)
+int32_t GenerateAABoundingBox(AABoundingBox* out, const float* positions, int32_t floatComponentsPerVertex, int32_t vertexCount)
 {
 	if (out == NULL)
-		return;
+		return efwErrs::kInvalidInput;
 
-	if (mesh.vertexCount == 0)
+	if (vertexCount == 0)
 	{
 		out->min = Vec3f::kZero;
 		out->max = Vec3f::kZero;
-		return;
+		return efwErrs::kOk;
 	}
 
 	// Calculate bounding sphere center
 	Vec3f min = Vec3f(FLT_MAX);
 	Vec3f max = Vec3f(-FLT_MAX);
 
-	int32_t vertexStride = mesh.vertexStride;
-	float* positions = (float*)( (uint8_t*)mesh.vertexData + mesh.vertexAttributes[VertexAttributes::kPosition].offset );
-	for (int32_t i=0; i<mesh.vertexCount; ++i)
+	for (int32_t i=0; i<vertexCount; ++i)
 	{
 		Vec3f position = Vec3f(positions);
 		min = Vec3Min(min, position);
 		max = Vec3Max(max, position);
-		positions += vertexStride/sizeof(float);
+		positions += floatComponentsPerVertex;
 	}
 
 	out->min = min;
 	out->max = max;
+
+	return efwErrs::kOk;
+}
+
+int32_t UnprocessedTriMeshHelper::GenerateAABoundingBox(AABoundingBox* out, const UnprocessedTriMesh& mesh)
+{
+	float* positions = (float*)( (uint8_t*)mesh.vertexData + mesh.vertexAttributes[VertexAttributes::kPosition].offset );
+	int32_t floatComponentsPerVertex = mesh.vertexStride/sizeof(float);
+
+	return ::GenerateAABoundingBox(out, positions, floatComponentsPerVertex, mesh.vertexCount);
 }
 
 
@@ -145,10 +155,10 @@ bool DuplicatedVerticesSort(const std::vector<int32_t>& a, const std::vector<int
 	return (a.size()>b.size());
 }
 
-void UnprocessedTriMeshHelper::MergeDuplicatedVertices(UnprocessedTriMesh* mesh, float positionDeltaThreashold, int32_t mergeDuplicateFlags)
+int32_t UnprocessedTriMeshHelper::MergeDuplicatedVertices(UnprocessedTriMesh* mesh, float positionDeltaThreashold, int32_t mergeDuplicateFlags)
 {
 	if (mesh == NULL)
-		return;
+		return efwErrs::kInvalidInput;
 
 	const int32_t kOctreeAxisPartions = 32;
 	const int32_t kOctreePartitions = kOctreeAxisPartions*kOctreeAxisPartions*kOctreeAxisPartions;
@@ -156,8 +166,9 @@ void UnprocessedTriMeshHelper::MergeDuplicatedVertices(UnprocessedTriMesh* mesh,
 	AABoundingBox boundingBox;
 	GenerateAABoundingBox(&boundingBox, *mesh);
 	Vec3f boundingBoxSize = boundingBox.max - boundingBox.min;
-	boundingBoxSize = Vec3Max(boundingBoxSize * 1.01f, Vec3f(1.0f));
-	Vec3f invOctreePartitionSize = Vec3f( 1.0f / (boundingBoxSize/kOctreeAxisPartions) );
+	boundingBoxSize = Vec3Max(boundingBoxSize * Vec3f(1.01f), Vec3f(1.0f));
+	//Vec3f invOctreePartitionSize = Vec3f( Vec3f(1.0f) / (boundingBoxSize/Vec3f(kOctreeAxisPartions)) );
+	Vec3f invOctreePartitionSize = Vec3f((float)kOctreeAxisPartions)/boundingBoxSize;
 
 	std::vector<int32_t>* octree = (std::vector<int32_t>*)memalign(16, kOctreePartitions*sizeof(std::vector<int32_t>));
 	memset(octree, 0, kOctreePartitions*sizeof(std::vector<int32_t>));
@@ -330,4 +341,261 @@ void UnprocessedTriMeshHelper::MergeDuplicatedVertices(UnprocessedTriMesh* mesh,
 	}
 
 	SAFE_ALIGNED_FREE(newVertexData);
+
+	return efwErrs::kOk;
+}
+
+
+int32_t InternalCompressVertexAttribute(void* output, const float* input, int32_t outputComponentsPerVertex, int32_t inputComponentsPerVertex, int32_t vertexCount,
+	int32_t attributeCompression, float scale[4], float bias[4])
+{
+	EFW_ASSERT(output != NULL && input != NULL);
+	EFW_ASSERT(outputComponentsPerVertex <= inputComponentsPerVertex);
+	EFW_ASSERT(outputComponentsPerVertex <= 4);
+
+	// If there's scale and bias the value will become unsigned
+	bool isSigned = (
+		//attributeCompression == AttributeCompressions::kSFloatToU8NormWithScaleAndBias
+		//|| attributeCompression == AttributeCompressions::kSFloatToU16NormWithScaleAndBias
+		attributeCompression == AttributeCompressions::kSFloatNormToU8Norm
+		|| attributeCompression == AttributeCompressions::kSFloatNormToU16Norm);
+
+	float conversionBias = 0.0f;
+	float conversionScale = 1.0f;
+	if (isSigned)
+	{
+		conversionBias = 0.5f;
+		conversionScale = 0.5f;
+	}
+
+	if (attributeCompression == AttributeCompressions::kSFloatNormToU8Norm || attributeCompression == AttributeCompressions::kUFloatNormToU8Norm ||
+		attributeCompression == AttributeCompressions::kSFloatToU8NormWithScaleAndBias || attributeCompression == AttributeCompressions::kUFloatToU8NormWithScaleAndBias)
+	{
+		for (int32_t i=0; i<vertexCount; i++)
+		{
+			for (int32_t j=0; j<outputComponentsPerVertex; j++)
+			{
+				float value = input[i*inputComponentsPerVertex+j];
+				float valueWithScaleBias = (value-bias[j])/scale[j];
+				float finalValue = (valueWithScaleBias * conversionScale + conversionBias);
+				EFW_ASSERT( finalValue >= 0.0f && finalValue <= 1.0f );
+
+				((uint8_t*)output)[i*outputComponentsPerVertex+j] = (uint8_t)(finalValue * UINT8_MAX);
+			}
+		}
+	}
+	else if (attributeCompression == AttributeCompressions::kSFloatNormToU16Norm || attributeCompression == AttributeCompressions::kUFloatNormToU16Norm ||
+		attributeCompression == AttributeCompressions::kSFloatToU16NormWithScaleAndBias || attributeCompression == AttributeCompressions::kUFloatToU16NormWithScaleAndBias )
+	{
+		for (int32_t i=0; i<vertexCount; i++)
+		{
+			for (int32_t j=0; j<outputComponentsPerVertex; j++)
+			{
+				float value = input[i*inputComponentsPerVertex+j];
+				float valueWithScaleBias = (value-bias[j])/scale[j];
+				float finalValue = (valueWithScaleBias * conversionScale + conversionBias);
+				EFW_ASSERT( finalValue >= 0.0f && finalValue <= 1.0f );
+
+				((uint16_t*)output)[i*outputComponentsPerVertex+j] = (uint16_t)(finalValue * UINT16_MAX);
+			}
+		}
+	}
+	else
+	{
+		EFW_ASSERT(false);
+	}
+
+	return efwErrs::kOk;
+}
+
+
+int32_t UnprocessedTriMeshHelper::CompressVertexAttribute(void** outData, const float* inputVertexData, int32_t vertexStride, int32_t vertexCount, UnprocessedTriMeshVertexAttribute attribute, 
+	int32_t attributeCompression, float* outPerComponentScale, float* outPerComponentBias)
+{
+	if (outData == NULL || inputVertexData == NULL)
+		return efwErrs::kInvalidInput;
+
+	// The maximum is 4 components
+	if (attribute.componentCount > 4)
+		return efwErrs::kInvalidInput;
+
+	float scale[4] = {1.0f, 1.0f, 1.0f, 1.0f};
+	float bias[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+
+	int32_t vertexDataComponents = vertexStride/sizeof(float);
+	float* vertexData = (float*)( (uint8_t*)inputVertexData + attribute.offset );
+	void* newAttributeData = memalign(16, sizeof(uint16_t)*attribute.componentCount*vertexCount);
+
+	bool useScaleAndBias = (attributeCompression == AttributeCompressions::kSFloatToU8NormWithScaleAndBias
+			|| attributeCompression == AttributeCompressions::kSFloatToU16NormWithScaleAndBias
+			|| attributeCompression == AttributeCompressions::kUFloatToU8NormWithScaleAndBias
+			|| attributeCompression == AttributeCompressions::kUFloatToU16NormWithScaleAndBias);
+	EFW_ASSERT(!useScaleAndBias || (outPerComponentBias != NULL && outPerComponentScale != NULL));
+
+	if (useScaleAndBias)
+	{
+		float length[4];
+		float minValue[4], maxValue[4];
+		length[0] = length[1] = length[2] = length[3] = 1.0f;
+		minValue[0] = minValue[1] = minValue[2] = minValue[3] = FLT_MAX;
+		maxValue[0] = maxValue[1] = maxValue[2] = maxValue[3] = -FLT_MAX;
+		
+		// Get the min and max value for each component
+		for (int32_t i=0; i<vertexCount; i++)
+		{
+			for (int32_t j=0; j<attribute.componentCount; j++)
+			{
+				float value = vertexData[i*vertexDataComponents+j];
+				minValue[j] = (minValue[j]>value)? value : minValue[j];
+				maxValue[j] = (maxValue[j]>value)? maxValue[j] : value;
+			}
+		}
+
+		// Get the length for each component
+		for (int32_t i=0; i<attribute.componentCount; i++)
+		{
+			length[i] = maxValue[i]-minValue[i];
+			if (length[i] == 0)
+				length[i] = 1.0f;
+		}
+
+		for (int32_t i=0; i<attribute.componentCount; i++)
+		{
+			scale[i] = length[i];
+			bias[i] = minValue[i];
+		}
+	}
+
+	int32_t result = InternalCompressVertexAttribute(newAttributeData, vertexData, attribute.componentCount, vertexDataComponents, vertexCount, 
+		attributeCompression, scale, bias);
+	
+	*outData = newAttributeData;
+	if (useScaleAndBias && outPerComponentBias != NULL && outPerComponentScale != NULL)
+	{
+		for (int32_t j=0; j<attribute.componentCount; j++)
+		{
+			outPerComponentBias[j] = bias[j];
+			outPerComponentScale[j] = scale[j];
+		}
+	}
+
+#if 0
+	// Debug
+	double totalError = 0.0;
+	for (int32_t i=0; i<vertexCount; i++)
+	{
+		EFW_ALIGNED_TYPE(16, float) original[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+		EFW_ALIGNED_TYPE(16, float) compressed[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+			
+		for (int32_t j=0; j<attribute.componentCount; j++)
+		{
+			original[j] = vertexData[i*vertexDataComponents+j];
+
+			if (attributeCompression == AttributeCompressions::kSFloatNormToU8Norm || attributeCompression == AttributeCompressions::kUFloatNormToU8Norm ||
+				attributeCompression == AttributeCompressions::kSFloatToU8NormWithScaleAndBias || attributeCompression == AttributeCompressions::kUFloatToU8NormWithScaleAndBias)
+			{
+				uint8_t* data = (uint8_t*)newAttributeData;
+				compressed[j] = (data[i*attribute.componentCount+j]/(float)UINT8_MAX) * scale[j] + bias[j];
+			}
+			else if (attributeCompression == AttributeCompressions::kSFloatNormToU16Norm || attributeCompression == AttributeCompressions::kUFloatNormToU16Norm ||
+				attributeCompression == AttributeCompressions::kSFloatToU16NormWithScaleAndBias || attributeCompression == AttributeCompressions::kUFloatToU16NormWithScaleAndBias )
+			{
+				uint16_t* data = (uint16_t*)newAttributeData;
+				compressed[j] = (data[i*attribute.componentCount+j]/(float)UINT16_MAX) * scale[j] + bias[j];
+			}
+		}
+
+		// TODO: Change to Vec4f
+		Vec3f originalVec = Vec3f(original);
+		Vec3f compressedVec = Vec3f(compressed);
+		totalError += Vec3Length(compressedVec - originalVec).X();
+
+		//printf("Original [%f, %f, %f]\r\n", vertexData[i*vertexDataComponents+0], vertexData[i*vertexDataComponents+1], vertexData[i*vertexDataComponents+2]);
+		//printf("Compress [%f, %f, %f]\r\n", 
+		//	outPerComponentBias[0] + (newAttributeData[i*attribute.componentCount+0]/(float)UINT16_MAX) *outPerComponentScale[0],
+		//	outPerComponentBias[1] + (newAttributeData[i*attribute.componentCount+1]/(float)UINT16_MAX) *outPerComponentScale[1],
+		//	outPerComponentBias[2] + (newAttributeData[i*attribute.componentCount+2]/(float)UINT16_MAX) *outPerComponentScale[2]);
+	}
+	printf("Quantization error: %f\r\n", totalError);
+#endif
+
+	return result;
+	/*
+	{
+		// Debug
+		double totalError = 0.0;
+		for (int32_t i=0; i<vertexCount; i++)
+		{
+			//for (int32_t j=0; j<attribute.componentCount; j++)
+			{
+				Vec3f original = Vec3f(vertexData[i*vertexDataComponents+0], vertexData[i*vertexDataComponents+1], vertexData[i*vertexDataComponents+2]);
+				Vec3f compressed = Vec3f(
+					outPerComponentBias[0] + (newAttributeData[i*attribute.componentCount+0]/(float)UINT16_MAX) *outPerComponentScale[0],
+					outPerComponentBias[1] + (newAttributeData[i*attribute.componentCount+1]/(float)UINT16_MAX) *outPerComponentScale[1],
+					outPerComponentBias[2] + (newAttributeData[i*attribute.componentCount+2]/(float)UINT16_MAX) *outPerComponentScale[2]);
+				Vec3f distance = Vec3Length(original-compressed);
+
+				totalError += distance.X();
+				
+				//printf("Original [%f, %f, %f]\r\n", vertexData[i*vertexDataComponents+0], vertexData[i*vertexDataComponents+1], vertexData[i*vertexDataComponents+2]);
+				//printf("Compress [%f, %f, %f]\r\n", 
+				//	outPerComponentBias[0] + (newAttributeData[i*attribute.componentCount+0]/(float)UINT16_MAX) *outPerComponentScale[0],
+				//	outPerComponentBias[1] + (newAttributeData[i*attribute.componentCount+1]/(float)UINT16_MAX) *outPerComponentScale[1],
+				//	outPerComponentBias[2] + (newAttributeData[i*attribute.componentCount+2]/(float)UINT16_MAX) *outPerComponentScale[2]);
+			}
+		}
+		//printf("Quantization error: %f\r\n", totalError);
+	}
+	else if (attributeCompression == AttributeCompressions::k16bUintNormalizedPerComponent)
+	{
+		int32_t vertexDataComponents = vertexStride/sizeof(float);
+		float* vertexData = (float*)( (uint8_t*)inputVertexData + attribute.offset );
+		uint16_t* newAttributeData = (uint16_t*)memalign(16, attribute.componentCount*sizeof(uint16_t)*vertexCount);
+		
+		for (int32_t i=0; i<vertexCount; i++)
+		{
+			for (int32_t j=0; j<attribute.componentCount; j++)
+			{
+				float value = vertexData[i*vertexDataComponents+j];
+				value *= 0.5f;
+				value += 0.5f;
+
+				// This will trash UVs
+				value = Math::Clamp( value, 0.0f, 1.0f );
+				newAttributeData[i*attribute.componentCount+j] = (uint16_t)(value * UINT16_MAX);
+			}
+		}
+		*outData = newAttributeData;
+	}
+	//else
+	//{
+	//	int32_t vertexDataComponents = vertexStride/sizeof(float);
+	//	float* vertexData = (float*)( (uint8_t*)inputVertexData + attribute.offset );
+	//	//uint16_t* newAttributeData = (uint16_t*)memalign(16, attribute.componentCount*sizeof(uint16_t)*vertexCount);
+	//	uint16_t* newAttributeData = (uint16_t*)memalign(16, 2*sizeof(uint16_t)*vertexCount);
+	//	
+	//	for (int32_t i=0; i<vertexCount; i++)
+	//	{
+	//		float values[4];
+	//		for (int32_t j=0; j<attribute.componentCount; j++)
+	//		{
+	//			values[j] = vertexData[i*vertexDataComponents+j];
+	//			values[j] *= 0.5f;
+	//			values[j] += 0.5f;
+	//		}
+
+	//		Vec3f normal = Vec3f(values[0], values[1], 0);
+	//		float normalZ = Math::Sqrt(values[2]);
+	//		normal = Vec3Normalize(normal) * Vec3f(normalZ);
+
+	//		float outs[2];
+	//		out[0] 
+	//		G=normalize(N.xy)*sqrt(N.z*0.5+0.5)
+
+	//	}
+	//	outData = newAttributeData;
+	//}
+	*/
+
+	return efwErrs::kOk;
 }
