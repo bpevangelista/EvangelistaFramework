@@ -11,7 +11,7 @@ void TextureReader::Release(Texture* outTexture)
 	if (outTexture == NULL)
 		return;
 
-	SAFE_ALIGNED_FREE(outTexture->data);
+	EFW_SAFE_ALIGNED_FREE(outTexture->data);
 }
 
 
@@ -121,7 +121,7 @@ int32_t TextureReader::ReadImage(Texture** outTexture, const char* filename)
 int32_t TextureReader::ReadTGA(Texture** outTexture, const char* filename, int32_t requiredDataAlignment)
 {
 	void* textureFileData = NULL;
-	int32_t textureFileSize = 0;
+	uint64_t textureFileSize = 0;
 
 	FileReader::ReadAll(&textureFileData, &textureFileSize, filename);
 	if (textureFileData == NULL)
@@ -175,7 +175,7 @@ int32_t TextureReader::ReadTGA(Texture** outTexture, const char* filename, int32
 	result->data = textureData;
 	*outTexture = result;
 
-	SAFE_ALIGNED_FREE(textureFileData);
+	EFW_SAFE_ALIGNED_FREE(textureFileData);
 	return efwErrs::kOk;
 }
 
@@ -186,7 +186,7 @@ int32_t TextureReader::ReadDDS(Texture** outTexture, const char* filename, int32
 	ImageDDS::DX10Header* ddsDX10Header = NULL;
 	void* imageData = NULL;
 	void* textureFileData = NULL;
-	int32_t textureFileSize = 0;
+	uint64_t textureFileSize = 0;
 
 	FileReader::ReadAll(&textureFileData, &textureFileSize, filename);
 	if (textureFileData != NULL && textureFileSize > sizeof(ImageDDS::Header))
@@ -194,7 +194,7 @@ int32_t TextureReader::ReadDDS(Texture** outTexture, const char* filename, int32
 	
 	if (textureFileData == NULL || ddsHeader->signature != ImageDDS::kFileSignature || ddsHeader->size != efwEndianSwapIfRequired(ImageDDS::kHeaderSize))
 	{
-		SAFE_ALIGNED_FREE(textureFileData);
+		EFW_SAFE_ALIGNED_FREE(textureFileData);
 		return efwErrs::kInvalidInput;
 	}
 
@@ -238,7 +238,7 @@ int32_t TextureReader::ReadDDS(Texture** outTexture, const char* filename, int32
 	int32_t imageDataPitch = CalculatePitch(width, textureFormat);
 	int32_t imageDataSize = CalculateSize(width, height, depth, mipCount, textureFormat);
 
-	int32_t checkImageDataSize = textureFileSize - ((uint32_t)imageData - (uint32_t)textureFileData);
+	uint64_t checkImageDataSize = textureFileSize - ((uintptr_t)imageData - (uintptr_t)textureFileData);
 	EFW_ASSERT(imageDataSize == checkImageDataSize);
 
 	// Copy image data to VRAM
@@ -257,6 +257,6 @@ int32_t TextureReader::ReadDDS(Texture** outTexture, const char* filename, int32
 	result->data = textureData;
 	*outTexture = result;
 
-	SAFE_ALIGNED_FREE(textureFileData);
+	EFW_SAFE_ALIGNED_FREE(textureFileData);
 	return efwErrs::kOk;
 }

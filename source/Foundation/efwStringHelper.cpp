@@ -58,7 +58,7 @@ void StringHelper::DestroyTokenArray(TokenArray** outTokenArray)
 {
 	if (outTokenArray != NULL)
 	{
-		SAFE_ALIGNED_FREE(*outTokenArray);
+		EFW_SAFE_ALIGNED_FREE(*outTokenArray);
 	}
 }
 

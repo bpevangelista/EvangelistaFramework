@@ -40,9 +40,9 @@ void WavefrontObjReader::Release(UnprocessedTriModel* model)
 
 	for (int32_t i=0; i < model->meshCount; ++i)
 	{
-		SAFE_ALIGNED_FREE(model->meshes[i].customUserData);
-		SAFE_ALIGNED_FREE(model->meshes[i].vertexData);
-		SAFE_ALIGNED_FREE(model->meshes[i].indexData);
+		EFW_SAFE_ALIGNED_FREE(model->meshes[i].customUserData);
+		EFW_SAFE_ALIGNED_FREE(model->meshes[i].vertexData);
+		EFW_SAFE_ALIGNED_FREE(model->meshes[i].indexData);
 	}
 }
 
@@ -203,10 +203,10 @@ int32_t ParseFace(vector<int32_t>* outIndexData, vector<uint64_t>* currentVertex
 
 int32_t FillMeshVertexAttributes(UnprocessedTriMesh* outMesh, const WavefrontObjVertexAttributes& vertexAttributes)
 {
-	int32_t vertexAttributeOffset = 0;
-	const int32_t kVertexPositionComponents = 3;
-	const int32_t kVertexNormalComponents = 3;
-	const int32_t kVertexUvComponents = 2;
+	uint8_t vertexAttributeOffset = 0;
+	const uint8_t kVertexPositionComponents = 3;
+	const uint8_t kVertexNormalComponents = 3;
+	const uint8_t kVertexUvComponents = 2;
 
 	// Process positions
 	const bool hasPositions = (vertexAttributes.positions.size() > 0);
@@ -364,7 +364,7 @@ int32_t WavefrontObjReader::ReadMaterialLib(UnprocessedMaterialLib** outMaterial
 
 	const int32_t kRequiredAlignment = 1024;
 	void* materialFileData = NULL;
-	int32_t materialFileDataSize = 0;
+	uint64_t materialFileDataSize = 0;
 	(*readFileFunc)(&materialFileData, &materialFileDataSize, fullFilePath, kRequiredAlignment);
 	
 	vector<UnprocessedMaterial> materials;
@@ -443,7 +443,7 @@ int32_t WavefrontObjReader::ReadMaterialLib(UnprocessedMaterialLib** outMaterial
 	}
 	// Release data
 	StringHelper::DestroyTokenArray(&tokenArray);
-	SAFE_ALIGNED_FREE(materialFileData);
+	EFW_SAFE_ALIGNED_FREE(materialFileData);
 
 	UnprocessedMaterialLib* materialLib = NULL;
 	int32_t materialCount = materials.size();
@@ -472,7 +472,7 @@ int32_t WavefrontObjReader::ReadModelAndMaterials(UnprocessedTriModel** outModel
 	// Read OBJ file data
 	const int32_t kRequiredAlignment = 1024;
 	void* objFileData = NULL;
-	int32_t objFileDataSize = 0;
+	uint64_t objFileDataSize = 0;
 	(*readFileFunc)(&objFileData, &objFileDataSize, fullFilePath, kRequiredAlignment);
 
 	TokenArray* tokenArray = NULL;
@@ -662,7 +662,7 @@ int32_t WavefrontObjReader::ReadModelAndMaterials(UnprocessedTriModel** outModel
 	}
 
 	StringHelper::DestroyTokenArray(&tokenArray);
-	SAFE_ALIGNED_FREE(objFileData);
+	EFW_SAFE_ALIGNED_FREE(objFileData);
 
 	// Flatten all meshes
 	UnprocessedTriModel* model = NULL;
