@@ -52,6 +52,22 @@ namespace Graphics
 			kCount
 		};
 	}
+	typedef AttributeCompressions::AttributeCompression AttributeCompression;
+
+	namespace TangentFrameCompressions
+	{
+		enum TangentFrameCompression
+		{
+			// Methods that compress the normal in 2x32b components (X,Y)
+			k64bNormalOnly_AzimuthalProjection,
+			k64bNormalOnly_SphereMapping,
+
+			// Methods that compress the entire tangent frame in 32b
+			k32bTangentWithBitangent,
+			k32bQuaternion
+		};
+	}
+	typedef TangentFrameCompressions::TangentFrameCompression TangentFrameCompression;
 
 	namespace MergeVertexFlags
 	{
@@ -73,8 +89,11 @@ namespace Graphics
 
 		int32_t MergeDuplicatedVertices(UnprocessedTriMesh* mesh, float positionDeltaThreashold, int32_t mergeDuplicateFlags);
 
-		int32_t CompressVertexAttribute(void** outData, const float* vertexData, int32_t vertexStride, int32_t vertexCount, UnprocessedTriMeshVertexAttribute attribute, 
-			int32_t attributeCompression, float* outPerComponentScale = NULL, float* outPerComponentBias = NULL);
+		int32_t CompressVertexAttribute(void** outData, const float* inputVertexData, int32_t vertexStride, int32_t vertexCount, UnprocessedTriMeshVertexAttribute attribute, 
+			AttributeCompression compressionType, float* outPerComponentScale = NULL, float* outPerComponentBias = NULL);
+
+		int32_t CompressTangentSpace(void** outData, const float* inputVertexData, int32_t vertexStride, int32_t vertexCount, 
+			UnprocessedTriMeshVertexAttribute vertexAttributes[VertexAttributes::kCount], TangentFrameCompression compressionType);
 	}
 }
 

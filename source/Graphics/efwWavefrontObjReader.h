@@ -24,7 +24,7 @@ namespace Graphics
 	namespace WavefrontObjReader
 	{
 		// Read file function declaration
-		typedef int32_t (*ReadFileFunc_t)(void** outData, int32_t* outSize, const char* filename, int32_t requiredAlignment);
+		typedef int32_t (*ReadFileFunc_t)(void** outData, uint64_t* outSize, const char* filename, int32_t requiredAlignment);
 
 		void Release(UnprocessedTriModel* model);
 		void Release(UnprocessedMaterialLib* material);

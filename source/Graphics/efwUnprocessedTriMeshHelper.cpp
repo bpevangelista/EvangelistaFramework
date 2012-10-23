@@ -226,7 +226,6 @@ int32_t UnprocessedTriMeshHelper::MergeDuplicatedVertices(UnprocessedTriMesh* me
 	}
 
 	// For each vertex, store an array of indices of other vertices that are near and can be merged
-	int32_t duplicateIndex = 0;
 	std::vector<std::vector<int32_t>> duplicates;
 	duplicates.resize(mesh->vertexCount);
 	for (int32_t i=0; i<kOctreePartitions; ++i)
@@ -262,7 +261,7 @@ int32_t UnprocessedTriMeshHelper::MergeDuplicatedVertices(UnprocessedTriMesh* me
 			}
 		}
 	}
-	SAFE_ALIGNED_FREE(octree);
+	EFW_SAFE_ALIGNED_FREE(octree);
 
 	// Sort duplicates based on count
 	std::sort(duplicates.begin(), duplicates.end(), DuplicatedVerticesSort);
@@ -310,7 +309,7 @@ int32_t UnprocessedTriMeshHelper::MergeDuplicatedVertices(UnprocessedTriMesh* me
 		}
 	}
 	duplicates.clear();
-	SAFE_ALIGNED_FREE(usedTable);
+	EFW_SAFE_ALIGNED_FREE(usedTable);
 
 	static uint32_t totalCount = 0;
 	static uint32_t totalDCount = 0;
@@ -324,7 +323,7 @@ int32_t UnprocessedTriMeshHelper::MergeDuplicatedVertices(UnprocessedTriMesh* me
 	// Replace old vertex data with new one
 	if (newVertexCount != mesh->vertexCount)
 	{
-		SAFE_ALIGNED_FREE(mesh->vertexData);
+		EFW_SAFE_ALIGNED_FREE(mesh->vertexData);
 	
 		float* newVertexDataCompact = (float*)memalign(16, newVertexCount * mesh->vertexStride);
 		memcpy(newVertexDataCompact, newVertexData, newVertexCount * mesh->vertexStride);
@@ -340,7 +339,7 @@ int32_t UnprocessedTriMeshHelper::MergeDuplicatedVertices(UnprocessedTriMesh* me
 		}
 	}
 
-	SAFE_ALIGNED_FREE(newVertexData);
+	EFW_SAFE_ALIGNED_FREE(newVertexData);
 
 	return efwErrs::kOk;
 }
@@ -410,7 +409,7 @@ int32_t InternalCompressVertexAttribute(void* output, const float* input, int32_
 
 
 int32_t UnprocessedTriMeshHelper::CompressVertexAttribute(void** outData, const float* inputVertexData, int32_t vertexStride, int32_t vertexCount, UnprocessedTriMeshVertexAttribute attribute, 
-	int32_t attributeCompression, float* outPerComponentScale, float* outPerComponentBias)
+	AttributeCompression attributeCompression, float* outPerComponentScale, float* outPerComponentBias)
 {
 	if (outData == NULL || inputVertexData == NULL)
 		return efwErrs::kInvalidInput;
@@ -479,9 +478,25 @@ int32_t UnprocessedTriMeshHelper::CompressVertexAttribute(void** outData, const 
 		}
 	}
 
+// TODO Put in a separated method? Compute error
 #if 0
+	// If there's scale and bias the value will become unsigned
+	bool isSigned = (
+		attributeCompression == AttributeCompressions::kSFloatNormToU8Norm
+		|| attributeCompression == AttributeCompressions::kSFloatNormToU16Norm);
+
+	float conversionBias = 0.0f;
+	float conversionScale = 1.0f;
+	if (isSigned)
+	{
+		conversionBias = 0.5f;
+		conversionScale = 0.5f;
+	}
+
 	// Debug
 	double totalError = 0.0;
+	double totalErrorOverLength = 0.0;
+
 	for (int32_t i=0; i<vertexCount; i++)
 	{
 		EFW_ALIGNED_TYPE(16, float) original[4] = {0.0f, 0.0f, 0.0f, 0.0f};
@@ -496,19 +511,24 @@ int32_t UnprocessedTriMeshHelper::CompressVertexAttribute(void** outData, const 
 			{
 				uint8_t* data = (uint8_t*)newAttributeData;
 				compressed[j] = (data[i*attribute.componentCount+j]/(float)UINT8_MAX) * scale[j] + bias[j];
+				compressed[j] = (compressed[j] - conversionBias) / conversionScale ;
 			}
 			else if (attributeCompression == AttributeCompressions::kSFloatNormToU16Norm || attributeCompression == AttributeCompressions::kUFloatNormToU16Norm ||
 				attributeCompression == AttributeCompressions::kSFloatToU16NormWithScaleAndBias || attributeCompression == AttributeCompressions::kUFloatToU16NormWithScaleAndBias )
 			{
 				uint16_t* data = (uint16_t*)newAttributeData;
 				compressed[j] = (data[i*attribute.componentCount+j]/(float)UINT16_MAX) * scale[j] + bias[j];
+				compressed[j] = (compressed[j] - conversionBias) / conversionScale ;
 			}
 		}
 
 		// TODO: Change to Vec4f
 		Vec3f originalVec = Vec3f(original);
 		Vec3f compressedVec = Vec3f(compressed);
-		totalError += Vec3Length(compressedVec - originalVec).X();
+		Vec3f difference = Vec3Length(compressedVec - originalVec);
+
+		totalError += Vec3Length(difference).X();
+		totalErrorOverLength += Vec3Length(difference / Vec3f(scale)).X();
 
 		//printf("Original [%f, %f, %f]\r\n", vertexData[i*vertexDataComponents+0], vertexData[i*vertexDataComponents+1], vertexData[i*vertexDataComponents+2]);
 		//printf("Compress [%f, %f, %f]\r\n", 
@@ -516,8 +536,90 @@ int32_t UnprocessedTriMeshHelper::CompressVertexAttribute(void** outData, const 
 		//	outPerComponentBias[1] + (newAttributeData[i*attribute.componentCount+1]/(float)UINT16_MAX) *outPerComponentScale[1],
 		//	outPerComponentBias[2] + (newAttributeData[i*attribute.componentCount+2]/(float)UINT16_MAX) *outPerComponentScale[2]);
 	}
-	printf("Quantization error: %f\r\n", totalError);
+	printf("Quantization Error/ErrorOverLength: [%f, %f]\r\n", totalError, totalErrorOverLength);
 #endif
 
 	return result;
+}
+
+
+int32_t UnprocessedTriMeshHelper::CompressTangentSpace(void** outData, const float* inputVertexData, int32_t vertexStride, int32_t vertexCount, 
+	UnprocessedTriMeshVertexAttribute vertexAttributes[VertexAttributes::kCount], TangentFrameCompression compressionType)
+{
+	if (outData == NULL || inputVertexData == NULL)
+		return efwErrs::kInvalidInput;
+	if (vertexAttributes[VertexAttributes::kNormal].componentCount != 3)
+		return efwErrs::kInvalidInput;
+
+	int32_t inputVertexComponents = vertexStride/sizeof(float);
+	ScopedPtr<float> outputData;
+
+	if (compressionType == TangentFrameCompressions::k64bNormalOnly_AzimuthalProjection)
+	{
+		float* inputData = (float*)( (uint8_t*)inputVertexData + vertexAttributes[VertexAttributes::kNormal].offset );
+		int32_t outputComponentsPerVertex = 2;
+		outputData.Reset( (float*)memalign(16, outputComponentsPerVertex*sizeof(float)*vertexCount) );
+
+		for (int32_t i=0; i<vertexCount; i++)
+		{
+			float* normalValues = &inputData[i*inputVertexComponents];
+			EFW_ASSERT( normalValues[0] >= -1.0f && normalValues[0] <= 1.0f);
+			EFW_ASSERT( normalValues[1] >= -1.0f && normalValues[1] <= 1.0f);
+			EFW_ASSERT( normalValues[2] >= -1.0f && normalValues[2] <= 1.0f);
+			normalValues[2] = normalValues[2] * 0.5f + 0.5f;
+
+			float scaler = Math::Sqrt(8*normalValues[2]+8);
+			if (scaler == 0.0f)
+				scaler = 0.00001f;
+			float newX = normalValues[0] / scaler + 0.5f;
+			float newY = normalValues[1] / scaler + 0.5f;
+
+			outputData[i*outputComponentsPerVertex+0] = Math::Clamp(newX, 0.00002f, 1.0f);
+			outputData[i*outputComponentsPerVertex+1] = Math::Clamp(newY, 0.00002f, 1.0f);
+			EFW_ASSERT( outputData[i*outputComponentsPerVertex+0] > 0.0f );
+			EFW_ASSERT( outputData[i*outputComponentsPerVertex+1] > 0.0f );
+		}
+	}
+	else if (compressionType == TangentFrameCompressions::k64bNormalOnly_SphereMapping)
+	{
+		float* inputData = (float*)( (uint8_t*)inputVertexData + vertexAttributes[VertexAttributes::kNormal].offset );
+		int32_t outputComponentsPerVertex = 2;
+		outputData.Reset( (float*)memalign(16, outputComponentsPerVertex*sizeof(float)*vertexCount) );
+
+		for (int32_t i=0; i<vertexCount; i++)
+		{
+			float* normalValues = &inputData[i*inputVertexComponents];
+			EFW_ASSERT( normalValues[0] >= -1.0f && normalValues[0] <= 1.0f);
+			EFW_ASSERT( normalValues[1] >= -1.0f && normalValues[1] <= 1.0f);
+			EFW_ASSERT( normalValues[2] >= -1.0f && normalValues[2] <= 1.0f);
+
+			if (fabs(normalValues[0]) < 0.00002f)
+				normalValues[0] = (normalValues[0] >= 0)? 0.00002f : -0.00002f;
+			if (fabs(normalValues[1]) < 0.00002f)
+				normalValues[1] = (normalValues[1] >= 0)? 0.00002f : -0.00002f;
+			if (fabs(normalValues[2]) < 0.00002f)
+				normalValues[2] = (normalValues[2] >= 0)? 0.00002f : -0.00002f;
+
+			Vec3f normalXYVec = Vec3f(normalValues[0], normalValues[1], 0);
+			float lengthXY = Vec3Length(normalXYVec).X();
+			EFW_ASSERT(lengthXY != 0);
+			float newZ = normalValues[2] * 0.5f + 0.5f;
+			float newX = normalValues[0] * Math::Sqrt(newZ) / lengthXY;
+			float newY = normalValues[1] * Math::Sqrt(newZ) / lengthXY;
+
+			outputData[i*outputComponentsPerVertex+0] = Math::Min(newX * 0.5f + 0.5f, 1.0f);
+			outputData[i*outputComponentsPerVertex+1] = Math::Min(newY * 0.5f + 0.5f, 1.0f);
+			EFW_ASSERT( outputData[i*outputComponentsPerVertex+0] > 0.0f );
+			EFW_ASSERT( outputData[i*outputComponentsPerVertex+1] > 0.0f );
+		}
+	}
+	else
+	{
+		// Not implemented yet
+		EFW_ASSERT(false);
+	}
+
+	*outData = outputData.Release();
+
+	return efwErrs::kOk;
 }
