@@ -17,19 +17,40 @@
 
 namespace efw
 {
-	namespace Console
+	namespace ConsoleOutputs
 	{
-		const int32_t kWarning = 1;
-		const int32_t kError = 2;
+		enum ConsoleOutput
+		{
+			kNull,
+			kStdOut,
+			kFile
+		};
 	}
+	typedef ConsoleOutputs::ConsoleOutput ConsoleOutput;
+
+	namespace ConsoleMessages
+	{
+		enum ConsoleMessage
+		{
+			kInfo =		1 << 0,
+			kWarning =	1 << 1,
+			kError =	1 << 2
+		};
+	}
+	typedef ConsoleMessages::ConsoleMessage ConsoleMessage;
 
 	namespace Console
 	{
+		extern const char* kConsoleBreakLine;
+
 		void Write(const char* str, ...);
 		void WriteLine(const char* str, ...);
 
 		void Write(int32_t messageType, const char* str, ...);
 		void WriteLine(int32_t messageType, const char* str, ...);
+
+		void SetWriteMask(int32_t writeMask);
+		void SetOutput(ConsoleOutput consoleOutput, const char* filepath = NULL);
 	}
 
 }
