@@ -18,18 +18,52 @@
 namespace efw
 {
 
-template <class T>
+template <typename T>
 class ScopedPtr : NonCopyable
 {
 public:
 	ScopedPtr(T* ptr = NULL) { mRawPointer = ptr; }
-	~ScopedPtr() { SAFE_ALIGNED_FREE(mRawPointer); }
+	~ScopedPtr() { EFW_SAFE_ALIGNED_FREE(mRawPointer); }
 	
+	void Reset(T* ptr = NULL) { if (ptr != mRawPointer) { EFW_SAFE_ALIGNED_FREE(mRawPointer); mRawPointer = ptr; } }
+	T* Release() { T* ptr = mRawPointer; mRawPointer = NULL; return ptr; }
+
 	T* operator -> () const { return mRawPointer; }
-	T& operator * () const { return *m_RawPointer; }
+	T& operator * () const { return *mRawPointer; }
+	operator T* () const { return mRawPointer; }
+	T& operator [] (int index) const { EFW_ASSERT(index >= 0 && mRawPointer != NULL); return mRawPointer[index]; }
+
+	bool operator == (const T* ptr) const { return mRawPointer == ptr; }
+	bool operator != (const T* ptr) const { return mRawPointer != ptr; }
 
 private:
-	const T* mRawPointer;
+	T* mRawPointer;
+};
+
+
+template <typename T>
+class GenericScopedPtr : NonCopyable
+{
+public:
+	typedef void (*DeleteFuncPtr)(void* data);
+
+	GenericScopedPtr(T* ptr = NULL, DeleteFuncPtr funcPtr = efw::SafeFreeAlign) { EFW_ASSERT(funcPtr); mRawPointer = ptr; mFuncPtr = funcPtr; }
+	~GenericScopedPtr() { mFuncPtr((void*)mRawPointer); }
+	
+	void Reset(T* ptr = NULL) { if (ptr != mRawPointer) { EFW_SAFE_ALIGNED_FREE(mRawPointer); mRawPointer = ptr; } }
+	T* Release() { T* ptr = mRawPointer; mRawPointer = NULL; return ptr; }
+
+	T* operator -> () const { return mRawPointer; }
+	T& operator * () const { return *mRawPointer; }
+	operator T* () const { return mRawPointer; }
+	T& operator [] (int index) const { EFW_ASSERT(index >= 0 && mRawPointer != NULL); return mRawPointer[index]; }
+
+	bool operator == (const T* ptr) const { return mRawPointer == ptr; }
+	bool operator != (const T* ptr) const { return mRawPointer != ptr; }
+
+private:
+	T* mRawPointer;
+	DeleteFuncPtr mFuncPtr;
 };
 
 }
