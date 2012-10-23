@@ -20,8 +20,8 @@ namespace efw
 {
 	namespace FileReader
 	{
-		int32_t Read(void* outData, int32_t outDataSize, const char* filename);
-		int32_t ReadAll(void** outData, int32_t* outSize, const char* filename, int32_t requiredAlignment = File::kDefaultDataAlignment);
+		int32_t Read(void* outData, uint64_t outDataSizeInBytes, const char* filename);
+		int32_t ReadAll(void** outData, uint64_t* outSizeInBytes, const char* filename, int32_t requiredAlignment = File::kDefaultDataAlignment);
 	}
 
 } // efw

@@ -1,17 +1,9 @@
 #include "Foundation/efwFileReader.h"
 #include "Math/efwMath.h"
 
-//#include <sys/types.h>
-#include <sys/stat.h>
-#include <stdio.h>
-
-#if !defined _MSC_VER
-#include <unistd.h>
-#endif
-
 using namespace efw;
 
-int32_t FileReader::Read(void* outData, int32_t outDataSize, const char* filename)
+int32_t FileReader::Read(void* outData, uint64_t outSizeInBytes, const char* filename)
 {
 	FILE* file = fopen(filename, "rb");
 	if (file == NULL)
@@ -23,10 +15,10 @@ int32_t FileReader::Read(void* outData, int32_t outDataSize, const char* filenam
 	fseek(file, 0, SEEK_END);
 	size_t fileSize = ftell(file);
 	fseek(file, 0, SEEK_SET);
-	size_t maxReadSize = Math::Min(fileSize, (uint32_t)outDataSize);
+	size_t maxReadSize = (size_t)Math::Min((uint64_t)fileSize, outSizeInBytes);
 
 	size_t readedBytes = 0;
-	if (outDataSize > 0)
+	if (outSizeInBytes > 0)
 	{
 		readedBytes = fread(outData, 1, maxReadSize, file);
 
@@ -47,7 +39,7 @@ int32_t FileReader::Read(void* outData, int32_t outDataSize, const char* filenam
 }
 
 
-int32_t FileReader::ReadAll(void** outData, int32_t* outSize, const char* filename, int32_t requiredAlignment)
+int32_t FileReader::ReadAll(void** outData, uint64_t* outSizeInBytes, const char* filename, int32_t requiredAlignment)
 {
 	FileInfo fileInfo;
 	File::GetInfo(&fileInfo, filename);
@@ -59,7 +51,6 @@ int32_t FileReader::ReadAll(void** outData, int32_t* outSize, const char* filena
 
 	size_t fileSize = fileInfo.size;
 	uint8_t* fileData = NULL;
-	size_t readedBytes = 0;
 
 	int32_t result = efwErrs::kInvalidInput;
 	if (fileSize > 0)
@@ -69,7 +60,7 @@ int32_t FileReader::ReadAll(void** outData, int32_t* outSize, const char* filena
 	}
 
 	*outData = fileData;
-	*outSize = fileSize;
+	*outSizeInBytes = fileSize;
 	
 	return result;
 }
