@@ -12,8 +12,8 @@ int32_t ImageDDS::GetTextureFormat(ImageDDS::Header* ddsHeader)
 	bool hasAlpha = (ddsHeader->pixelFormat.flags & ImageDDS::kPixelFormatFlags_HasAlpha) != 0;
 	
 	// Right now we only support RGB, RGBA or FourCC formats
-	EFW_ASSERT(isRGB || isFourCC);
-	if (!isRGB && !isFourCC)
+	EFW_ASSERT(isLuminance || isRGB || isFourCC);
+	if (!isLuminance && !isRGB && !isFourCC)
 		return TextureFormats::kUnknown;
 
 	if (isFourCC)
@@ -40,6 +40,12 @@ int32_t ImageDDS::GetTextureFormat(ImageDDS::Header* ddsHeader)
 	else if (isRGB)
 	{
 		return (hasAlpha)? TextureFormats::kRGBA : TextureFormats::kRGB;
+	}
+	else if (isLuminance)
+	{
+		// TODO Is it possible to have alpha here as well?
+		EFW_NOT_IMPLEMENTED_YET; // As we need to check if this path works
+		return TextureFormats::kL8;
 	}
 
 	// Should never reach here

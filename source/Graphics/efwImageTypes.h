@@ -96,7 +96,7 @@ namespace Graphics
 		{
 			uint8_t identsize;          // size of ID field that follows 18 byte header (0 usually)
 			uint8_t colourmaptype;      // type of colour map 0=none, 1=has palette
-			uint8_t imagetype;          // type of image 0=none,1=indexed,2=rgb,3=grey,+8=rle packed
+			uint8_t imagetype;          // type of image 0=none,1=indexed,2=rgb/rgba,3=grey,+8=rle packed
 
 			uint16_t colourmapstart;     // first colour map entry in palette
 			uint16_t colourmaplength;    // number of colours in palette
