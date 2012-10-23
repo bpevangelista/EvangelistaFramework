@@ -16,28 +16,44 @@
 #if defined _MSC_VER
 #define _CRT_SECURE_NO_WARNINGS		// Disable non-secure function calls warning
 #pragma warning(disable:4200)		// Disable zero sized arrays warning
-#else
+#endif
+
+//
+#include <stdint.h>
+#include <float.h>
+#include <limits.h>
+
+#include <stdarg.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+
+// Platform specific includes
+#if defined _MSC_VER
+#include <sys/stat.h>
+#elif defined __GNUC__
 #include <unistd.h>
 #endif
 
-#include <float.h>
-#include <limits.h>
-#include <stdint.h>
-#include <string.h>
-#include <stdlib.h>
-
+// 
 #if defined _MSC_VER
 #define EFW_INLINE inline
-EFW_INLINE void* memalign(size_t alignment, size_t size) { return _aligned_malloc(size, alignment); }
-EFW_INLINE void freealign(void* address) { _aligned_free(address); }
 #define EFW_PACKED_BEGIN __pragma(pack(push,1))
 #define EFW_PACKED_END __pragma(pack(pop))
 #define EFW_ALIGNED_TYPE(_ALIGN_BYTES, _TYPE) __declspec(align(_ALIGN_BYTES)) _TYPE
+
+EFW_INLINE void* memalign(size_t alignment, size_t size) { return _aligned_malloc(size, alignment); }
+EFW_INLINE void freealign(void* address) { _aligned_free(address); }
+
+// GNUC
 #elif defined __GNUC__
 #define EFW_INLINE inline
 #define EFW_PACKED_BEGIN
 #define EFW_PACKED_END __attribute__((packed))
 #define EFW_ALIGNED_TYPE(_ALIGN_BYTES, _TYPE) _TYPE __attribute__((aligned(_ALIGN_BYTES)))
+
+EFW_INLINE void freealign(void* address) { free(address); }
+
 #else
 #error Compiled not defined!
 #endif
@@ -51,12 +67,8 @@ EFW_INLINE void freealign(void* address) { _aligned_free(address); }
 #define EFW_ALIGN(alignment, value) (((value)+(alignment)-1) & ~((alignment)-1))
 #endif
 
-#ifndef SAFE_ALIGNED_FREE
-#define SAFE_ALIGNED_FREE(a) do { if((a) != NULL) { freealign(a); (a) = NULL; } } while(false)
-#endif
-
-#ifndef SAFE_DELETE
-#define SAFE_DELETE(a) do { if((a) != NULL) { delete(a); (a) = NULL; } } while(false)
+#ifndef EFW_SAFE_ALIGNED_FREE
+#define EFW_SAFE_ALIGNED_FREE(a) do { if((a) != NULL) { freealign(a); (a) = NULL; } } while(false)
 #endif
 
 // TODO: Needs to be improved
@@ -66,6 +78,10 @@ EFW_INLINE void freealign(void* address) { _aligned_free(address); }
 
 #ifndef EFW_UNUSED
 #define EFW_UNUSED(a) (void)(a)
+#endif
+
+#ifndef EFW_NOT_IMPLEMENTED_YET
+#define EFW_NOT_IMPLEMENTED_YET do { /*TODO*/ } while(false)
 #endif
 
 // Temporary: TODO FIX
@@ -98,10 +114,19 @@ namespace efwErrs
 
 namespace efw
 {
+	EFW_INLINE void SafeFreeAlign(void* data) { if (data != NULL) { freealign(data); } }
+	//EFW_INLINE void SafeFree(void* data) { if (data != NULL) { free(data); } }
+	//EFW_INLINE void SafeDelete(void* data) { if (data != NULL) { delete data; } }
+	//EFW_INLINE void SafeDeleteArray(void* data) { if (data != NULL) { delete[] data; } }
+
 	class NonCopyable
 	{
+	protected:
+		NonCopyable() {}
+		~NonCopyable() {}
+
 	private:
-		NonCopyable(const NonCopyable& ref) {}
-		NonCopyable& operator = (const NonCopyable& ref) {}
+		NonCopyable(const NonCopyable& ref) { EFW_UNUSED(ref); }
+		NonCopyable& operator = (const NonCopyable& ref) { EFW_UNUSED(ref); return *this; }
 	};
 }
