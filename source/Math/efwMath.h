@@ -32,11 +32,16 @@ namespace efw
 	namespace Math
 	{
 		static const float kEpsilon = 10e-6f;
+		EFW_INLINE int64_t Min(int64_t v1, int64_t v2) { return (v1<v2)? v1 : v2; }
+		EFW_INLINE int64_t Max(int64_t v1, int64_t v2) { return (v1<v2)? v2 : v1; }
+		EFW_INLINE uint64_t Min(uint64_t v1, uint64_t v2) { return (v1<v2)? v1 : v2; }
+		EFW_INLINE uint64_t Max(uint64_t v1, uint64_t v2) { return (v1<v2)? v2 : v1; }
 
 		EFW_INLINE uint32_t Min(uint32_t v1, uint32_t v2) { return (v1<v2)? v1 : v2; }
 		EFW_INLINE uint32_t Max(uint32_t v1, uint32_t v2) { return (v1<v2)? v2 : v1; }
 		EFW_INLINE int32_t Min(int32_t v1, int32_t v2) { return (v1<v2)? v1 : v2; }
 		EFW_INLINE int32_t Max(int32_t v1, int32_t v2) { return (v1<v2)? v2 : v1; }
+
 		EFW_INLINE float Min(float v1, float v2) { return (v1<v2)? v1 : v2; }
 		EFW_INLINE float Max(float v1, float v2) { return (v1<v2)? v2 : v1; }
 

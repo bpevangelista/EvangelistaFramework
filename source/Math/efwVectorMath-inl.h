@@ -228,12 +228,12 @@ EFW_INLINE Vec3f Vec3Normalize(Vec3fRef vec)
 {
 #if defined(EFW_MATH_SSE)
 #else
-	float invLength = 0.0f;
+	float invLength = 1.0f;
 	float lengthSquared = Vec3LengthSquared(vec).v[0];
 
 	if (lengthSquared > 0.0f)
 	{
-		float invLength = 1.0f / Math::Sqrt(lengthSquared);
+		invLength = 1.0f / Math::Sqrt(lengthSquared);
 	}
 
 	return vec * Vec3f(invLength);
