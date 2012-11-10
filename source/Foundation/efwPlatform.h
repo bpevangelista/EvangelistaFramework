@@ -16,6 +16,7 @@
 #if defined _MSC_VER
 #define _CRT_SECURE_NO_WARNINGS		// Disable non-secure function calls warning
 #pragma warning(disable:4200)		// Disable zero sized arrays warning
+#pragma warning(disable:4127)		// Disable "conditional expression is constant"
 #endif
 
 //
@@ -27,10 +28,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/stat.h>
 
 // Platform specific includes
 #if defined _MSC_VER
-#include <sys/stat.h>
 #elif defined __GNUC__
 #include <unistd.h>
 #endif
@@ -78,6 +79,10 @@ EFW_INLINE void freealign(void* address) { free(address); }
 
 #ifndef EFW_UNUSED
 #define EFW_UNUSED(a) (void)(a)
+#endif
+
+#ifndef EFW_DEBUG_BREAK
+#define EFW_DEBUG_BREAK __debugbreak()
 #endif
 
 #ifndef EFW_NOT_IMPLEMENTED_YET
