@@ -104,5 +104,8 @@
     <ClInclude Include="source\Foundation\efwResourceManager.h">
       <Filter>Foundation</Filter>
     </ClInclude>
+    <ClInclude Include="source\Foundation\efwGuid.h">
+      <Filter>Foundation</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
