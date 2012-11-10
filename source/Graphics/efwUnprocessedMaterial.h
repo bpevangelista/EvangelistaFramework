@@ -22,16 +22,13 @@ namespace Graphics
 {
 	struct UnprocessedMaterial
 	{
+		Guid guid;
 		Texture* albedoTexture;
 		Texture* normalMapTexture;
 
 		char albedoTextureFilename[Path::kMaxFullPathLength];
 		char normalMapTextureFilename[Path::kMaxFullPathLength];
 		//UnprocessedMaterialTexture specularTexture;
-
-		static const int32_t kMaxNameLength = 64;
-		int64_t nameHash;
-		char name[kMaxNameLength];
 	};
 
 	struct UnprocessedMaterialLib

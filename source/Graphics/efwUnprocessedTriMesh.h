@@ -14,6 +14,7 @@
 #pragma once
 
 #include "Foundation/efwPlatform.h"
+#include "Foundation/efwGuid.h"
 
 namespace efw
 {
@@ -21,22 +22,22 @@ namespace Graphics
 {
 	namespace VertexAttributes
 	{
-		const int32_t kPosition		= 0;
-		const int32_t kNormal		= 1;
-		const int32_t kTangent		= 2;
-		const int32_t kBinormal		= 3;
-		const int32_t kColor		= 4;
-		const int32_t kBlendIndex	= 5;
-		const int32_t kBlendWeight	= 6;
-		const int32_t kUv0			= 7;
-		const int32_t kUv1			= 8;
-		const int32_t kUv2			= 9;
-		const int32_t kUv3			= 10;
-		const int32_t kUv4			= 11;
-		const int32_t kUv5			= 12;
-		const int32_t kUv6			= 13;
-		const int32_t kUv7			= 14;
-		const int32_t kCount		= 15;
+		const uint16_t kPosition	= 0;
+		const uint16_t kNormal		= 1;
+		const uint16_t kTangent		= 2;
+		const uint16_t kBinormal	= 3;
+		const uint16_t kColor		= 4;
+		const uint16_t kBlendIndex	= 5;
+		const uint16_t kBlendWeight	= 6;
+		const uint16_t kUv0			= 7;
+		const uint16_t kUv1			= 8;
+		const uint16_t kUv2			= 9;
+		const uint16_t kUv3			= 10;
+		const uint16_t kUv4			= 11;
+		const uint16_t kUv5			= 12;
+		const uint16_t kUv6			= 13;
+		const uint16_t kUv7			= 14;
+		const uint16_t kCount		= 15;
 	}
 
 	struct UnprocessedTriMeshVertexAttribute
@@ -46,20 +47,6 @@ namespace Graphics
 		uint8_t _pad[2];
 	};
 
-	//struct UnprocessedExternalResource
-	//{
-	//	int32_t resourceNameLength;
-	//	char* resourceName;
-	//};
-
-	struct UnprocessedGuid
-	{
-		static const int32_t kMaxUniqueNameLength = 64;
-
-		uint64_t uniqueNameHash;
-		char uniqueName[kMaxUniqueNameLength];
-	};
-
 	/**
 	 * Intermediate format used to store unprocessed triangle meshes coming from any input format. 
 	 * Meshes are stored as indexed triangle lists, vertexes as a single interleaved array and indices as a separated array.
@@ -67,19 +54,19 @@ namespace Graphics
 	 */
 	struct UnprocessedTriMesh
 	{
-		UnprocessedGuid materialRefGuid;
-		UnprocessedGuid guid;
+		Guid materialGuid;
+		Guid guid;
 
 		UnprocessedTriMeshVertexAttribute vertexAttributes[VertexAttributes::kCount];
-		int32_t vertexStride;
-		int32_t indexStride;
-		int32_t vertexCount;
-		int32_t indexCount;
+		uint16_t vertexStride;
+		uint16_t indexStride;
+		uint16_t vertexCount;
+		uint32_t indexCount;
 		void* vertexData;
 		void* indexData;
 		
 		// User custom data
-		int32_t customUserDataSize;
+		uint64_t customUserDataSize;
 		void* customUserData;
 	};
 
@@ -88,7 +75,7 @@ namespace Graphics
 	 */
 	struct UnprocessedTriModel
 	{
-		int32_t meshCount;
+		uint32_t meshCount;
 		UnprocessedTriMesh meshes[];
 	};
 }

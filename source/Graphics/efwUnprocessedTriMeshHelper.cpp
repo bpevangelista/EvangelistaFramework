@@ -70,7 +70,7 @@ void UnprocessedTriMeshHelper::GenerateBoundingSphere(float* outBoudingSphere, c
 	//EFW_ASSERT(vertexStride % sizeof(float) == 0);
 
 	//EFW_ASSERT(mesh.vertexAttributes[VertexAttributes::kPosition].componentCount == 3);
-	for (int32_t i=0; i<mesh.vertexCount; ++i)
+	for (uint32_t i=0; i<mesh.vertexCount; ++i)
 	{
 		if (positions[0] > maxX) maxX = positions[0];
 		if (positions[1] > maxY) maxY = positions[1];
@@ -86,7 +86,7 @@ void UnprocessedTriMeshHelper::GenerateBoundingSphere(float* outBoudingSphere, c
 
 	float distanceSquared = 0;
 	positions = (float*)( (uint8_t*)mesh.vertexData + mesh.vertexAttributes[VertexAttributes::kPosition].offset );
-	for (int32_t i=0; i<mesh.vertexCount; ++i)
+	for (uint32_t i=0; i<mesh.vertexCount; ++i)
 	{
 		float distX = positions[0] - outBoudingSphere[0];
 		float distY = positions[1] - outBoudingSphere[1];
@@ -183,7 +183,7 @@ int32_t UnprocessedTriMeshHelper::MergeDuplicatedVertices(UnprocessedTriMesh* me
 		(float*)( (uint8_t*)mesh->vertexData + mesh->vertexAttributes[VertexAttributes::kUv0].offset );
 
 	// Split vertex indices into octree-buckets
-	for (int32_t i=0;i<mesh->vertexCount;++i)
+	for (uint32_t i=0; i<mesh->vertexCount; ++i)
 	{
 		Vec3f position = Vec3f( &positions[i*vertexComponents] );
 
@@ -332,7 +332,7 @@ int32_t UnprocessedTriMeshHelper::MergeDuplicatedVertices(UnprocessedTriMesh* me
 
 		// Adjust index list
 		uint32_t* indices = (uint32_t*)mesh->indexData;
-		for (int32_t i=0; i<mesh->indexCount; ++i)
+		for (uint32_t i=0; i<mesh->indexCount; ++i)
 		{
 			uint32_t currentIndex = indices[i];
 			indices[i] = indexMap[currentIndex];

@@ -48,7 +48,7 @@ namespace Graphics
 		uint8_t dataFormat;					// F16/F32/S16/U16/U8 Specials:X10Y11Z11
 		uint8_t dataOffset;
 		uint8_t componentCount;				// 1/2/3/4
-		uint8_t vertexShaderRegister;		// 0..255
+		uint8_t vertexShaderRegister;		// 0..16
 	};
 
 
@@ -58,9 +58,9 @@ namespace Graphics
 		// Does it make sense to compress things with 6 or less indices?
 		uintptr_t indexData;
 		uint32_t indexCount;
-
-		uint16_t indexFormat; // Indices are always 16b for now
+		
 		uint16_t primitiveType;
+		//uint16_t indexFormat; // Indices are always 16b for now
 	};
 
 	
@@ -85,12 +85,7 @@ namespace Graphics
 
 		// Chunks
 		uint16_t meshChunkCount;
-		TriMeshChunk* meshChunks;
-
-#if defined(_DEBUG)
-		// Chunks debug data
-		char chunkName[kObjTriMeshMaxNameLength];
-#endif
+		TriMeshChunk meshChunks[];
 	};
 
 
