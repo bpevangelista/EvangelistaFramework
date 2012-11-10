@@ -48,13 +48,13 @@ namespace Graphics
 	// A texture will also need to store: type (cube, volume?), filters, etc? Or should we separate samplers and texture states?
 	struct TextureDesc
 	{
-		int32_t width;
-		int32_t height;
-		int32_t depth;
-		int32_t mipCount;
-		//int32_t arrayCount; // Future
-		int32_t pitch;
-		int32_t format;
+		uint16_t width;
+		uint16_t height;
+		uint16_t depth;
+		uint16_t mipCount;
+		//uint32_t arrayCount; // Future
+		uint16_t pitch;
+		uint16_t format;
 	};
 
 	struct Texture

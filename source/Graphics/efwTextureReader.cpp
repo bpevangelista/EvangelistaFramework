@@ -230,13 +230,13 @@ int32_t TextureReader::ReadDDS(Texture** outTexture, const char* filename, int32
 	}
 
 	// Get image desc
-	int32_t width = Math::Max(1, ddsHeader->width);
-	int32_t height = Math::Max(1, ddsHeader->height);
-	int32_t depth = Math::Max(1, ddsHeader->depth);
-	int32_t mipCount = Math::Max(1, ddsHeader->mipMapCount);
-	int32_t textureFormat = ImageDDS::GetTextureFormat(ddsHeader);
-	int32_t imageDataPitch = CalculatePitch(width, textureFormat);
-	int32_t imageDataSize = CalculateSize(width, height, depth, mipCount, textureFormat);
+	uint16_t width = (uint16_t)Math::Min(Math::Max(1, ddsHeader->width), UINT16_MAX);
+	uint16_t height = (uint16_t)Math::Min(Math::Max(1, ddsHeader->height), UINT16_MAX);
+	uint16_t depth = (uint16_t)Math::Min(Math::Max(1, ddsHeader->depth), UINT16_MAX);
+	uint16_t mipCount = (uint16_t)Math::Min(Math::Max(1, ddsHeader->mipMapCount), UINT16_MAX);
+	uint16_t textureFormat = ImageDDS::GetTextureFormat(ddsHeader);
+	uint16_t imageDataPitch = CalculatePitch(width, textureFormat);
+	uint32_t imageDataSize = CalculateSize(width, height, depth, mipCount, textureFormat);
 
 	uint64_t checkImageDataSize = textureFileSize - ((uintptr_t)imageData - (uintptr_t)textureFileData);
 	EFW_ASSERT(imageDataSize == checkImageDataSize);
