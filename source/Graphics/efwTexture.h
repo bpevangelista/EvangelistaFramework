@@ -22,27 +22,23 @@ namespace Graphics
 {
 	namespace TextureFileTypes
 	{
-		const int32_t kUnknown = 0;
-		const int32_t kBMP = 1;
-		const int32_t kDDS = 2;
-		const int32_t kTGA = 3;
+		const uint16_t kUnknown = 0;
+		const uint16_t kBMP = 1;
+		const uint16_t kDDS = 2;
+		const uint16_t kTGA = 3;
 	}
 
 	namespace TextureFormats
 	{
-		enum TextureFormat
-		{
-			kUnknown = 0,
-			kL8 = 1,
-			kRGB = 2,
-			kRGBA = 3,
-			kABGR = 4,
-			kDXT1 = 5,
-			kDXT3 = 6,
-			kDXT5 = 7
-		};
+		const uint16_t kUnknown = 0;
+		const uint16_t kL8 = 1;
+		const uint16_t kRGB = 2;
+		const uint16_t kRGBA = 3;
+		const uint16_t kABGR = 4;
+		const uint16_t kDXT1 = 5;
+		const uint16_t kDXT3 = 6;
+		const uint16_t kDXT5 = 7;
 	}
-	typedef TextureFormats::TextureFormat TextureFormat;
 
 	// TODO Maybe separate this concept as Image2D and Texture?
 	// A texture will also need to store: type (cube, volume?), filters, etc? Or should we separate samplers and texture states?
@@ -59,10 +55,10 @@ namespace Graphics
 
 	struct Texture
 	{
-		TextureDesc desc;
-
-		int32_t dataSize;
+		uint64_t dataSize;
 		void* data;
+
+		TextureDesc desc;
 	};
 
 } // Graphics

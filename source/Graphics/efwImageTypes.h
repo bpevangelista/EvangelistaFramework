@@ -47,6 +47,7 @@ namespace Graphics
 		const int32_t kPixelFormatFourCC_DXT5 = MAKE_FOURCC('D','X','T','5');
 		const int32_t kPixelFormatFourCC_DX10 = MAKE_FOURCC('D','X','1','0');
 
+
 		EFW_PACKED_BEGIN struct PixelFormatHeader
 		{
 			int32_t size;
@@ -58,6 +59,7 @@ namespace Graphics
 			int32_t blueBitMask;
 			int32_t alphaBitMask;
 		} EFW_PACKED_END;
+
 
 		EFW_PACKED_BEGIN struct Header
 		{
@@ -78,6 +80,7 @@ namespace Graphics
 			int32_t _reserved2;
 		} EFW_PACKED_END;
 
+
 		EFW_PACKED_BEGIN struct DX10Header
 		{
 			int32_t dxgiFormat;
@@ -87,8 +90,9 @@ namespace Graphics
 			int32_t reserved;
 		} EFW_PACKED_END;
 
-		int32_t GetTextureFormat(Header* ddsHeader);
+		uint16_t GetTextureFormat(Header* ddsHeader);
 	} // DDS
+
 
 	namespace ImageTGA
 	{
@@ -110,7 +114,7 @@ namespace Graphics
 			uint8_t descriptor;          // image descriptor bits (vh flip bits)
 		} EFW_PACKED_END;
 
-		int32_t GetTextureFormat(Header* tgaHeader);
+		uint16_t GetTextureFormat(Header* tgaHeader);
 
 	} // TGA
 

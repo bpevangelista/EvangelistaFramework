@@ -15,39 +15,43 @@ void TextureReader::Release(Texture* outTexture)
 }
 
 
-int32_t TextureReader::CalculatePitch(int32_t width, int32_t textureFormat)
+uint16_t TextureReader::CalculatePitch(int32_t width, uint16_t textureFormat)
 {
+	uint32_t result = 0;
+
 	switch (textureFormat)
 	{
 		case TextureFormats::kRGB:
-			return width * 3;
+			result = width * 3;
 
 		case TextureFormats::kABGR:
 		case TextureFormats::kRGBA:
-			return width * 4;
+			result = width * 4;
 
 		case TextureFormats::kDXT1:
-			return Math::Max(1, (width+3) / 4) * 8;
+			result = Math::Max(1, (width+3) / 4) * 8;
 
 		case TextureFormats::kDXT3:
 		case TextureFormats::kDXT5:
-			return Math::Max(1, (width+3) / 4) * 16;
+			result = Math::Max(1, (width+3) / 4) * 16;
 			break;
 
 		default:
 			EFW_ASSERT(false);
-			return 0;
 	};
+
+	EFW_ASSERT(result < UINT16_MAX);
+	return (uint16_t)result;
 }
 
 
-int32_t TextureReader::CalculateSize(int32_t width, int32_t height, int32_t depth, int32_t mipCount, int32_t textureFormat)
+uint64_t TextureReader::CalculateSize(int32_t width, int32_t height, int32_t depth, int32_t mipCount, uint16_t textureFormat)
 {
-	int32_t layerSize = 0;
+	uint64_t layerSize = 0;
 
 	do
 	{
-		int32_t pitch = CalculatePitch(width, textureFormat);
+		uint16_t pitch = CalculatePitch(width, textureFormat);
 
 		int32_t heightOrBlockCount = height;
 		if (textureFormat == TextureFormats::kDXT1 ||
@@ -67,7 +71,7 @@ int32_t TextureReader::CalculateSize(int32_t width, int32_t height, int32_t dept
 }
 
 
-int32_t TextureReader::GetTextureFileType(int32_t* outTextureFileType, const char* textureName)
+uint16_t TextureReader::GetTextureFileType(int32_t* outTextureFileType, const char* textureName)
 {
 	FileInfo fileInfo;
 	File::GetInfo(&fileInfo, textureName);
@@ -138,9 +142,9 @@ int32_t TextureReader::ReadTGA(Texture** outTexture, const char* filename, int32
 	tgaHeader->width = efwEndianSwapIfRequired(tgaHeader->width);
 	tgaHeader->height = efwEndianSwapIfRequired(tgaHeader->height);
 
-	int32_t textureBpp = (tgaHeader->bits >> 3);
-	int32_t imagePitch = tgaHeader->width * textureBpp;
-	int32_t imageDataSize = imagePitch * tgaHeader->height;
+	uint16_t textureBpp = (tgaHeader->bits >> 3);
+	uint16_t imagePitch = tgaHeader->width * textureBpp;
+	uint64_t imageDataSize = imagePitch * tgaHeader->height;
 
 	// Validate TGA image
 	const uint8_t kImageTypeRGB = 2;
@@ -150,8 +154,8 @@ int32_t TextureReader::ReadTGA(Texture** outTexture, const char* filename, int32
 	EFW_ASSERT(isValidTexture);
 
 	// Copy image data to VRAM
-	void* textureData = memalign(requiredDataAlignment, imageDataSize);
-	memcpy(textureData, imageData, imageDataSize);
+	void* textureData = memalign(requiredDataAlignment, (size_t)imageDataSize);
+	memcpy(textureData, imageData, (size_t)imageDataSize);
 
 	// Convert BGRA to RGBA
 	EFW_ASSERT(imageDataSize%4==0);
@@ -236,14 +240,14 @@ int32_t TextureReader::ReadDDS(Texture** outTexture, const char* filename, int32
 	uint16_t mipCount = (uint16_t)Math::Min(Math::Max(1, ddsHeader->mipMapCount), UINT16_MAX);
 	uint16_t textureFormat = ImageDDS::GetTextureFormat(ddsHeader);
 	uint16_t imageDataPitch = CalculatePitch(width, textureFormat);
-	uint32_t imageDataSize = CalculateSize(width, height, depth, mipCount, textureFormat);
-
+	
+	uint64_t imageDataSize = CalculateSize(width, height, depth, mipCount, textureFormat);
 	uint64_t checkImageDataSize = textureFileSize - ((uintptr_t)imageData - (uintptr_t)textureFileData);
 	EFW_ASSERT(imageDataSize == checkImageDataSize);
 
 	// Copy image data to VRAM
-	void* textureData = memalign(requiredDataAlignment, imageDataSize);
-	memcpy(textureData, imageData, imageDataSize);
+	void* textureData = memalign(requiredDataAlignment, (size_t)imageDataSize);
+	memcpy(textureData, imageData, (size_t)imageDataSize);
 
 	// Copy out
 	Texture* result = (Texture*)memalign(16, sizeof(Texture));

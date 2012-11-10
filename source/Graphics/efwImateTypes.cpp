@@ -4,7 +4,7 @@
 using namespace efw;
 using namespace efw::Graphics;
 
-int32_t ImageDDS::GetTextureFormat(ImageDDS::Header* ddsHeader)
+uint16_t ImageDDS::GetTextureFormat(ImageDDS::Header* ddsHeader)
 {
 	bool isLuminance = (ddsHeader->pixelFormat.flags & ImageDDS::kPixelFormatFlags_IsLuminance) != 0;
 	bool isRGB = (ddsHeader->pixelFormat.flags & ImageDDS::kPixelFormatFlags_IsRGB) != 0;

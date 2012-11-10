@@ -29,9 +29,9 @@ namespace Graphics
 	namespace TextureReader
 	{
 		void Release(Texture* outTexture);
-		int32_t GetTextureFileType(int32_t* outTextureFileType, const char* textureName);
-		int32_t CalculatePitch(int32_t width, int32_t textureFormat);
-		int32_t CalculateSize(int32_t width, int32_t height, int32_t depth, int32_t mipCount, int32_t textureFormat);
+		uint16_t GetTextureFileType(int32_t* outTextureFileType, const char* textureName);
+		uint16_t CalculatePitch(int32_t width, uint16_t textureFormat);
+		uint64_t CalculateSize(int32_t width, int32_t height, int32_t depth, int32_t mipCount, uint16_t textureFormat);
 
 		int32_t ReadImage(Texture** outTexture, const char* filename);
 		int32_t ReadTGA(Texture** outTexture, const char* filename, int32_t requiredDataAlignment = kDefaultTextureAlignment);
