@@ -1,0 +1,108 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Foundation">
+      <UniqueIdentifier>{309b8030-75fe-4b5d-839f-a92610792e6a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Math">
+      <UniqueIdentifier>{fdb8b017-58a3-4a12-b6c6-2a1ad0f3fa46}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Graphics">
+      <UniqueIdentifier>{e91d0b0b-d56f-4012-bfc3-eeed7aea1c91}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="source\Foundation\efwConsole.cpp">
+      <Filter>Foundation</Filter>
+    </ClCompile>
+    <ClCompile Include="source\Foundation\efwFileReader.cpp">
+      <Filter>Foundation</Filter>
+    </ClCompile>
+    <ClCompile Include="source\Foundation\efwPathHelper.cpp">
+      <Filter>Foundation</Filter>
+    </ClCompile>
+    <ClCompile Include="source\Foundation\efwStringHelper.cpp">
+      <Filter>Foundation</Filter>
+    </ClCompile>
+    <ClCompile Include="source\Graphics\efwTextureReader.cpp">
+      <Filter>Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="source\Graphics\efwUnprocessedTriMeshHelper.cpp">
+      <Filter>Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="source\Graphics\efwWavefronObjReader.cpp">
+      <Filter>Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="source\Foundation\efwFile.cpp">
+      <Filter>Foundation</Filter>
+    </ClCompile>
+    <ClCompile Include="source\Graphics\efwImateTypes.cpp">
+      <Filter>Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="source\Math\efwVectorMath.cpp">
+      <Filter>Math</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="source\Foundation\efwConsole.h">
+      <Filter>Foundation</Filter>
+    </ClInclude>
+    <ClInclude Include="source\Foundation\efwFileReader.h">
+      <Filter>Foundation</Filter>
+    </ClInclude>
+    <ClInclude Include="source\Foundation\efwMemory.h">
+      <Filter>Foundation</Filter>
+    </ClInclude>
+    <ClInclude Include="source\Foundation\efwPathHelper.h">
+      <Filter>Foundation</Filter>
+    </ClInclude>
+    <ClInclude Include="source\Foundation\efwPlatform.h">
+      <Filter>Foundation</Filter>
+    </ClInclude>
+    <ClInclude Include="source\Foundation\efwStringHelper.h">
+      <Filter>Foundation</Filter>
+    </ClInclude>
+    <ClInclude Include="source\Graphics\efwTexture.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="source\Graphics\efwTextureReader.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="source\Graphics\efwTriMesh.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="source\Graphics\efwUnprocessedTriMesh.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="source\Graphics\efwUnprocessedTriMeshHelper.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="source\Graphics\efwWavefrontObjReader.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="source\Math\efwVectorMath.h">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="source\Foundation\efwFile.h">
+      <Filter>Foundation</Filter>
+    </ClInclude>
+    <ClInclude Include="source\Math\efwMath.h">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="source\Graphics\efwUnprocessedMaterial.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="source\Graphics\efwImageTypes.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="source\Math\efwVectorMath-inl.h">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="source\Foundation\efwPointerTypes.h">
+      <Filter>Foundation</Filter>
+    </ClInclude>
+    <ClInclude Include="source\Foundation\efwResourceManager.h">
+      <Filter>Foundation</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
