@@ -23,13 +23,16 @@ uint16_t TextureReader::CalculatePitch(int32_t width, uint16_t textureFormat)
 	{
 		case TextureFormats::kRGB:
 			result = width * 3;
+			break;
 
 		case TextureFormats::kABGR:
 		case TextureFormats::kRGBA:
 			result = width * 4;
+			break;
 
 		case TextureFormats::kDXT1:
 			result = Math::Max(1, (width+3) / 4) * 8;
+			break;
 
 		case TextureFormats::kDXT3:
 		case TextureFormats::kDXT5:
@@ -38,6 +41,7 @@ uint16_t TextureReader::CalculatePitch(int32_t width, uint16_t textureFormat)
 
 		default:
 			EFW_ASSERT(false);
+			break;
 	};
 
 	EFW_ASSERT(result < UINT16_MAX);
