@@ -14,6 +14,8 @@
 #include "Foundation/efwPlatform.h"
 #include "Foundation/efwMemory.h"
 
+#define EFW_EXPORT_GUIDNAME
+
 namespace efw
 {
 	
@@ -45,7 +47,7 @@ namespace efw
 			return hash64 != guid.hash64;
 		}
 
-#ifdef _DEBUG
+#ifdef EFW_EXPORT_GUIDNAME
 		const char* GetName() const { return fullName; }
 		
 	private: 
@@ -77,4 +79,5 @@ namespace efw
 		int32_t count;
 		Handle handles[];
 	};
+
 }
