@@ -566,14 +566,15 @@ int32_t UnprocessedTriMeshHelper::CompressTangentSpace(void** outData, const flo
 			EFW_ASSERT( normalValues[0] >= -1.0f && normalValues[0] <= 1.0f);
 			EFW_ASSERT( normalValues[1] >= -1.0f && normalValues[1] <= 1.0f);
 			EFW_ASSERT( normalValues[2] >= -1.0f && normalValues[2] <= 1.0f);
-			normalValues[2] = normalValues[2] * 0.5f + 0.5f;
+			//normalValues[2] = normalValues[2] * 0.5f + 0.5f;
 
-			float scaler = Math::Sqrt(8*normalValues[2]+8);
-			if (scaler == 0.0f)
-				scaler = 0.00001f;
+			float scaler = Math::Sqrt(8.0f*normalValues[2]+8.0f);
+			//if (scaler == 0.0f)
+			//	scaler = 0.5f;
 			float newX = normalValues[0] / scaler + 0.5f;
 			float newY = normalValues[1] / scaler + 0.5f;
 
+			// TODO: This method needs to be fixed, including this clamp
 			outputData[i*outputComponentsPerVertex+0] = Math::Clamp(newX, 0.00002f, 1.0f);
 			outputData[i*outputComponentsPerVertex+1] = Math::Clamp(newY, 0.00002f, 1.0f);
 			EFW_ASSERT( outputData[i*outputComponentsPerVertex+0] > 0.0f );
@@ -593,20 +594,24 @@ int32_t UnprocessedTriMeshHelper::CompressTangentSpace(void** outData, const flo
 			EFW_ASSERT( normalValues[1] >= -1.0f && normalValues[1] <= 1.0f);
 			EFW_ASSERT( normalValues[2] >= -1.0f && normalValues[2] <= 1.0f);
 
+			// Make sure X and Y are not zero
 			if (fabs(normalValues[0]) < 0.00002f)
 				normalValues[0] = (normalValues[0] >= 0)? 0.00002f : -0.00002f;
 			if (fabs(normalValues[1]) < 0.00002f)
 				normalValues[1] = (normalValues[1] >= 0)? 0.00002f : -0.00002f;
-			if (fabs(normalValues[2]) < 0.00002f)
-				normalValues[2] = (normalValues[2] >= 0)? 0.00002f : -0.00002f;
 
 			Vec3f normalXYVec = Vec3f(normalValues[0], normalValues[1], 0);
 			float lengthXY = Vec3Length(normalXYVec).X();
 			EFW_ASSERT(lengthXY != 0);
+
+			// Make sure newZ is not zero
 			float newZ = normalValues[2] * 0.5f + 0.5f;
+			if (fabs(newZ) < 0.00002f)
+				newZ = (newZ >= 0)? 0.00002f : -0.00002f;
 			float newX = normalValues[0] * Math::Sqrt(newZ) / lengthXY;
 			float newY = normalValues[1] * Math::Sqrt(newZ) / lengthXY;
 
+			// 
 			outputData[i*outputComponentsPerVertex+0] = Math::Min(newX * 0.5f + 0.5f, 1.0f);
 			outputData[i*outputComponentsPerVertex+1] = Math::Min(newY * 0.5f + 0.5f, 1.0f);
 			EFW_ASSERT( outputData[i*outputComponentsPerVertex+0] > 0.0f );
