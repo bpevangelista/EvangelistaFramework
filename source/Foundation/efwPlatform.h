@@ -134,4 +134,18 @@ namespace efw
 		NonCopyable(const NonCopyable& ref) { EFW_UNUSED(ref); }
 		NonCopyable& operator = (const NonCopyable& ref) { EFW_UNUSED(ref); return *this; }
 	};
+
+
+	struct Handle
+	{
+		uint64_t tableIndex;
+		uint64_t guid;
+	};
+
+
+	struct HandleSet
+	{
+		int32_t count;
+		Handle handles[];
+	};
 }

@@ -27,7 +27,6 @@ namespace Graphics
 		const int32_t kCompressed16b_CCW = 2;
 	}
 
-
 	//namespace TriMeshVertexFixedFormats
 	//{
 	//	const int32_t kInvalidFormat = 0;
@@ -49,30 +48,44 @@ namespace Graphics
 		uint8_t dataFormat;					// F16/F32/S16/U16/U8 Specials:X10Y11Z11
 		uint8_t dataOffset;
 		uint8_t componentCount;				// 1/2/3/4
-		uint8_t vertexShaderRegister;		// 0..15
+		uint8_t vertexShaderRegister;		// 0..255
 	};
 
 
 	struct TriMeshChunk
 	{
-		// Material ID
-		int32_t materialId;
-
 		// Can be either 16b CCW non-compressed, or 16b CCW compressed
 		// Does it make sense to compress things with 6 or less indices?
-		uint8_t* indexData;
-		int32_t indexDataSize;
-		int32_t indexCount;
+		uintptr_t indexData;
+		uint32_t indexCount;
 
-		// Interleaved data block 0
-		uint8_t* vertexData;
-		int32_t vertexDataSize;
-		int32_t vertexDataCount;
+		uint16_t indexFormat; // Indices are always 16b for now
+		uint16_t primitiveType;
+	};
 
-		// Interleaved data block 1
-		uint8_t* vertexGpuData;
-		int32_t vertexGpuDataSize;
-		int32_t vertexGpuDataCount;
+	
+	struct TriMesh
+	{
+		// Pointers to data on CPU and GPU
+		// Note: CPU/GPU data doesn't mean the visibility the data but its usage
+		uintptr_t vertexCpuData;
+		uintptr_t vertexGpuData;
+
+		// Interleaved data on CPU
+		uint16_t vertexCpuCount;
+		uint16_t vertexCpuStrideInBytes;
+		uint16_t vertexCpuAttributeCount;
+		TriMeshVertexAttribute vertexCpuAttributes[16];
+
+		// Interleaved data on GPU
+		uint16_t vertexGpuCount;
+		uint16_t vertexGpuDataStrideInBytes;
+		uint16_t vertexCpuAttributeCount;
+		TriMeshVertexAttribute vertexGpuAttributes[16];
+
+		// Chunks
+		uint16_t meshChunkCount;
+		TriMeshChunk* meshChunks;
 
 #if defined(_DEBUG)
 		// Chunks debug data
@@ -81,6 +94,7 @@ namespace Graphics
 	};
 
 
+	/*
 	struct TriMesh
 	{
 		// Bounding sphere volume
@@ -98,16 +112,18 @@ namespace Graphics
 		int32_t meshChunkCount;
 		TriMeshChunk* meshChunks;
 	};
+	*/
 
+	//struct TriModel
+	//{
+	//	// Bounding sphere volume
+	//	float boundingSphereX, boundingSphereY, boundingSphereZ, boundingSphereRadius;
 
-	struct TriModel
-	{
-		// Bounding sphere volume
-		float boundingSphereX, boundingSphereY, boundingSphereZ, boundingSphereRadius;
+	//	int32_t meshCount;
+	//	TriMesh meshes[0];
+	//	uint64_t meshesMaterial[];
 
-		int32_t meshCount;
-		TriMesh meshes[0];
-	};
+	//};
 
 
 } // Graphics

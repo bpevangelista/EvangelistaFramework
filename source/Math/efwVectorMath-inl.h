@@ -28,7 +28,7 @@ EFW_INLINE Vec3f::Vec3f(float X, float Y, float Z)
 
 EFW_INLINE Vec3f::Vec3f(const float* ptr)
 {
-	EFW_MATH_ASSERT( (((int32_t)ptr) % 16) == 0 );
+	EFW_MATH_ASSERT( (((uintptr_t)ptr) % 16) == 0 );
 	EFW_MATH_ASSERT( IsFinite(ptr[0]) && IsFinite(ptr[1]) && IsFinite(ptr[2]) );
 
 #if defined(EFW_MATH_SSE)

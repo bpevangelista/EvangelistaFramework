@@ -42,6 +42,11 @@ namespace efw
 		EFW_INLINE int32_t Min(int32_t v1, int32_t v2) { return (v1<v2)? v1 : v2; }
 		EFW_INLINE int32_t Max(int32_t v1, int32_t v2) { return (v1<v2)? v2 : v1; }
 
+		EFW_INLINE int32_t Min(uint16_t v1, uint16_t v2) { return (v1<v2)? v1 : v2; }
+		EFW_INLINE int32_t Max(uint16_t v1, uint16_t v2) { return (v1<v2)? v2 : v1; }
+		EFW_INLINE int32_t Min(int16_t v1, int16_t v2) { return (v1<v2)? v1 : v2; }
+		EFW_INLINE int32_t Max(int16_t v1, int16_t v2) { return (v1<v2)? v2 : v1; }
+
 		EFW_INLINE float Min(float v1, float v2) { return (v1<v2)? v1 : v2; }
 		EFW_INLINE float Max(float v1, float v2) { return (v1<v2)? v2 : v1; }
 

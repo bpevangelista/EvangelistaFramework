@@ -17,53 +17,65 @@
 
 namespace efw
 {
-
-namespace Graphics
-{
-	namespace TextureFileTypes
+	namespace ResourceTypes
 	{
-		const int32_t kUnknown = 0;
-		const int32_t kBMP = 1;
-		const int32_t kDDS = 2;
-		const int32_t kTGA = 3;
-	}
-
-	namespace TextureFormats
-	{
-		enum TextureFormat
+		enum ResourceType
 		{
-			kUnknown = 0,
-			kL8 = 1,
-			kRGB = 2,
-			kRGBA = 3,
-			kABGR = 4,
-			kDXT1 = 5,
-			kDXT3 = 6,
-			kDXT5 = 7
+			kShaderProgram,
+			kTexture,
+			kMaterial,
+			kMesh,
+			kCount
 		};
 	}
-	typedef TextureFormats::TextureFormat TextureFormat;
 
-	// TODO Maybe separate this concept as Image2D and Texture?
-	// A texture will also need to store: type (cube, volume?), filters, etc? Or should we separate samplers and texture states?
-	struct TextureDesc
+
+	struct PackageHeader
 	{
-		uint16_t width;
-		uint16_t height;
-		uint16_t depth;
-		uint16_t mipCount;
-		//uint32_t arrayCount; // Future
-		uint16_t pitch;
-		uint16_t format;
+		uint64_t id;
+		uint32_t resourceCount;
+
+		ResourceTypeGroup resourceTypeGroup[ResourceTypes::kCount];
+		ResourceDesc resourceDesc[0];
 	};
 
-	struct Texture
-	{
-		TextureDesc desc;
 
-		int32_t dataSize;
-		void* data;
+	struct ResourceTypeGroup
+	{
+		uint64_t resourceDescStartIndex;
+		uint64_t resourceDescCount;
+		uint64_t resourceDataOffsetInBytes;
+		uint64_t resourceDataSize;
 	};
 
-} // Graphics
-} // efw
+
+	struct ResourceDesc
+	{
+		uint64_t guid;
+		uint32_t resourceType;
+		uintptr_t dataOffset;
+		uint32_t dataSize;
+	};
+
+
+	namespace ResourceLoader
+	{
+		int32_t OpenPackage(const char* filePath);
+		
+		int32_t ClosePackage();
+		int32_t CloseAllPackages();
+	}
+
+
+	struct ResourceEntry
+	{
+		uint64_t guid;
+		uintptr_t resourceOffset;
+	};
+
+
+	namespace ResourceManager
+	{
+		int32_t GetAllByType(HandleSet** outHandleSet, int32_t resourceType);
+	}
+}
