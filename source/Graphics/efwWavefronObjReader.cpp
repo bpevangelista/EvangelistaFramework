@@ -38,7 +38,7 @@ void WavefrontObjReader::Release(UnprocessedTriModel* model)
 	if (model == NULL)
 		return;
 
-	for (int32_t i=0; i < model->meshCount; ++i)
+	for (uint32_t i=0; i < model->meshCount; ++i)
 	{
 		EFW_SAFE_ALIGNED_FREE(model->meshes[i].customUserData);
 		EFW_SAFE_ALIGNED_FREE(model->meshes[i].vertexData);
@@ -241,7 +241,7 @@ int32_t FillMeshVertexAttributes(UnprocessedTriMesh* outMesh, const WavefrontObj
 }
 
 
-int32_t GenerateMesh(UnprocessedTriMesh* outMesh, const WavefrontObjVertexAttributes& vertexAttributes, 
+int32_t GenerateMesh(UnprocessedTriMesh* outMesh, Guid meshGuid, Guid materialRefGuid, const WavefrontObjVertexAttributes& vertexAttributes, 
 	const vector<uint64_t>& vertexList, const vector<int32_t>& indexData)
 {
 	if (outMesh == NULL)
@@ -252,12 +252,8 @@ int32_t GenerateMesh(UnprocessedTriMesh* outMesh, const WavefrontObjVertexAttrib
 
 	// Initialize mesh data to zero
 	memset(outMesh, 0, sizeof(UnprocessedTriMesh));
-
-	if (strcmp(outMesh->name, "") == 0)
-	{
-		const char kDefaultMeshName[] = "NoName";
-		memcpy(outMesh->name, kDefaultMeshName, EFW_COUNTOF(kDefaultMeshName));
-	}
+	outMesh->guid = meshGuid;
+	outMesh->materialGuid = materialRefGuid;
 
 	// Process index data
 	const int32_t indexDataCount = indexData.size();
@@ -351,7 +347,7 @@ void DebugPrintLineTokens(const TokenArray* tokenArray)
 
 void DebugPrintMeshInfo(const UnprocessedTriMesh& mesh)
 {
-	Console::WriteLine("Line %06d: Mesh Name/Vertices/Indices: %s/%d/%d", gModelInputLineCount, mesh.name, mesh.vertexCount, mesh.indexCount);
+	Console::WriteLine("Line %06d: Mesh Name/Vertices/Indices: %s/%d/%d", gModelInputLineCount, mesh.guid.GetName(), mesh.vertexCount, mesh.indexCount);
 }
 
 
@@ -401,11 +397,11 @@ int32_t WavefrontObjReader::ReadMaterialLib(UnprocessedMaterialLib** outMaterial
 		{
 			materials.resize(materials.size() + 1);
 			UnprocessedMaterial& material = materials[materialIndex];
-			
-			int32_t nameSize = Math::Min(EFW_COUNTOF(material.name)-1, strlen(tokenValue));
-			memcpy(material.name, tokenValue, nameSize);
-			material.name[nameSize] = 0;
-			material.nameHash = efwHash64(material.name, nameSize);
+
+			if (tokenValue != NULL && strlen(tokenValue) > 0)
+				material.guid.initFromName(tokenValue);
+			else
+				material.guid.initFromRandomSeed();
 		}
 		// Textures
 		else 
@@ -488,11 +484,12 @@ int32_t WavefrontObjReader::ReadModelAndMaterials(UnprocessedTriModel** outModel
 	vector<uint64_t> currentVertexIndexToAttributes;
 	// Each element maps attributes of one vertex to its index
 	map<uint64_t, int32_t> currentVertexAttributesToIndex;
-	// Stores the name of the last specified group
-	char currentMeshName[UnprocessedTriMesh::kMaxNameLength];
-	memset(currentMeshName, 0, EFW_COUNTOF(currentMeshName));
-	// Stores the index of the last specified material
-	int32_t currentMeshMaterialId = -1;
+	// Stores the GUID of the current mesh
+	Guid currentMeshGuid;
+	currentMeshGuid.initFromRandomSeed();
+	// Stores the GUID of the last referenced material
+	Guid lastReferencedMaterialGuid;
+	memset(&lastReferencedMaterialGuid, 0, sizeof(Guid));
 
 	vector<UnprocessedTriMesh> meshes;
 	UnprocessedMaterialLib* materialLib = NULL;
@@ -550,13 +547,11 @@ int32_t WavefrontObjReader::ReadModelAndMaterials(UnprocessedTriModel** outModel
 
 					int32_t meshIndex = meshes.size();
 					meshes.resize(meshes.size() + 1);
-					GenerateMesh(&meshes[meshIndex], vertexAttributes, currentVertexIndexToAttributes, currentIndexData);
+					GenerateMesh(&meshes[meshIndex], currentMeshGuid, lastReferencedMaterialGuid, vertexAttributes, currentVertexIndexToAttributes, currentIndexData);
 					
-					// Others
-					meshes[meshIndex].materialId = currentMeshMaterialId;
-					memcpy(meshes[meshIndex].name, currentMeshName, UnprocessedTriMesh::kMaxNameLength);
-					meshes[meshIndex].nameHash = efwHash64(meshes[meshIndex].name, strlen(meshes[meshIndex].name));
-					memset(currentMeshName, 0, EFW_COUNTOF(currentMeshName));
+					// Reset guids
+					currentMeshGuid.initFromRandomSeed();
+					memset(&lastReferencedMaterialGuid, 0, sizeof(lastReferencedMaterialGuid));
 
 					DebugPrintMeshInfo(meshes[meshIndex]);
 				}
@@ -570,9 +565,7 @@ int32_t WavefrontObjReader::ReadModelAndMaterials(UnprocessedTriModel** outModel
 				if (tokenArray->count > 1)
 				{
 					const char* meshName = StringHelper::GetTokenAt(tokenArray, 1);
-					int32_t nameSize = Math::Min(UnprocessedTriMesh::kMaxNameLength-1, (int32_t)strlen(meshName));
-					memcpy(currentMeshName, meshName, nameSize);
-					currentMeshName[nameSize] = 0;
+					currentMeshGuid.initFromName(meshName);
 				}
 
 				// Print vertices up to this point
@@ -605,26 +598,26 @@ int32_t WavefrontObjReader::ReadModelAndMaterials(UnprocessedTriModel** outModel
 				if (materialLib != NULL &&
 					tokenArray->count > 1 && (strcmp(tokenKey, "usemtl") == 0))
 				{
-					int64_t hash = efwHash64(tokenValue, strlen(tokenValue));
-					
+					lastReferencedMaterialGuid.initFromName(tokenValue);
+
 					int32_t i=0;
 					bool materialFound = false;
 					while (i<materialLib->materialCount && !materialFound)
 					{
-						if (hash == materialLib->materials[i].nameHash)
-						{
-							EFW_ASSERT(strcmp(tokenValue, materialLib->materials[i].name) == 0);
+						if (lastReferencedMaterialGuid == materialLib->materials[i].guid)
 							materialFound = true;
-							currentMeshMaterialId = i;
-						}
 
 						i++;
 					}
 
 					if (!materialFound)
 					{
-						//Console::WriteLine("Line %06d: [SKIPPED] \"%s\" material was not found!", gModelInputLineCount, tokenValue);
+						Console::WriteLine("Line %06d: [SKIPPED] \"%s\" material was not found!", gModelInputLineCount, tokenValue);
 					}
+				}
+				else
+				{
+					// TODO There was no material lib or the material name was invalid
 				}
 			}
 			break;
@@ -651,14 +644,8 @@ int32_t WavefrontObjReader::ReadModelAndMaterials(UnprocessedTriModel** outModel
 	{
 		int32_t meshIndex = meshes.size();
 		meshes.resize(meshes.size()+1);
-		GenerateMesh(&meshes[meshIndex], vertexAttributes, currentVertexIndexToAttributes, currentIndexData);
+		GenerateMesh(&meshes[meshIndex], currentMeshGuid, lastReferencedMaterialGuid, vertexAttributes, currentVertexIndexToAttributes, currentIndexData);
 		
-		// Others
-		memcpy(meshes[meshIndex].name, currentMeshName, UnprocessedTriMesh::kMaxNameLength);
-		meshes[meshIndex].nameHash = efwHash64(meshes[meshIndex].name, strlen(meshes[meshIndex].name));
-		meshes[meshIndex].materialId = currentMeshMaterialId;
-		memset(currentMeshName, 0, EFW_COUNTOF(currentMeshName));
-
 		DebugPrintMeshInfo(meshes[meshIndex]);
 	}
 
