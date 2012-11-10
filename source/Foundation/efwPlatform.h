@@ -119,10 +119,7 @@ namespace efwErrs
 
 namespace efw
 {
-	EFW_INLINE void SafeFreeAlign(void* data) { if (data != NULL) { freealign(data); } }
-	//EFW_INLINE void SafeFree(void* data) { if (data != NULL) { free(data); } }
-	//EFW_INLINE void SafeDelete(void* data) { if (data != NULL) { delete data; } }
-	//EFW_INLINE void SafeDeleteArray(void* data) { if (data != NULL) { delete[] data; } }
+	EFW_INLINE void FreeAlignSafe(void* data) { if (data != NULL) { freealign(data); } }
 
 	class NonCopyable
 	{
@@ -135,17 +132,4 @@ namespace efw
 		NonCopyable& operator = (const NonCopyable& ref) { EFW_UNUSED(ref); return *this; }
 	};
 
-
-	struct Handle
-	{
-		uint64_t tableIndex;
-		uint64_t guid;
-	};
-
-
-	struct HandleSet
-	{
-		int32_t count;
-		Handle handles[];
-	};
 }
