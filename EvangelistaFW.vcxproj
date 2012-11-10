@@ -23,14 +23,15 @@
     <ClCompile Include="source\Math\efwVectorMath.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="efwPointerTypes.h" />
     <ClInclude Include="source\Foundation\efwConsole.h" />
     <ClInclude Include="source\Foundation\efwFile.h" />
     <ClInclude Include="source\Foundation\efwFileReader.h" />
     <ClInclude Include="source\Foundation\efwMemory.h" />
     <ClInclude Include="source\Foundation\efwPathHelper.h" />
     <ClInclude Include="source\Foundation\efwPlatform.h" />
+    <ClInclude Include="source\Foundation\efwPointerTypes.h" />
     <ClInclude Include="source\Foundation\efwStringHelper.h" />
+    <ClInclude Include="source\Foundation\efwResourceManager.h" />
     <ClInclude Include="source\Graphics\efwTexture.h" />
     <ClInclude Include="source\Graphics\efwTextureReader.h" />
     <ClInclude Include="source\Graphics\efwTriMesh.h" />
@@ -83,12 +84,12 @@
     <ClCompile>
       <PrecompiledHeader>
       </PrecompiledHeader>
-      <WarningLevel>Level3</WarningLevel>
+      <WarningLevel>Level4</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>Source</AdditionalIncludeDirectories>
       <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
-      <TreatWarningAsError>true</TreatWarningAsError>
+      <TreatWarningAsError>false</TreatWarningAsError>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
