@@ -63,6 +63,17 @@ EFW_INLINE void freealign(void* address) { free(address); }
 #define NULL 0L
 #endif
 
+template <bool test> struct EFW_STATIC_ASSERT_FAILED;
+template <> struct EFW_STATIC_ASSERT_FAILED<true> { enum { value = 1}; };
+template <int value> struct EFW_STATIC_ASSERT_DUMMY_STRUCT;
+
+#ifndef EFW_STATIC_ASSERT
+#define EFW_STATIC_ASSERT(cond) typedef EFW_STATIC_ASSERT_DUMMY_STRUCT< \
+	sizeof(EFW_STATIC_ASSERT_FAILED<(bool)(cond)>) > \
+	EFW_STATIC_ASSERT_DUMMY_STRUCT##__LINE__
+	//EFW_STATIC_ASSERT_DUMMY_STRUCT##__COUNTER__
+#endif
+
 // Only works with power of 2
 #ifndef EFW_ALIGN
 #define EFW_ALIGN(alignment, value) (((value)+(alignment)-1) & ~((alignment)-1))
