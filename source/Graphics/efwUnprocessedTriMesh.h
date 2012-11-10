@@ -52,6 +52,14 @@ namespace Graphics
 	//	char* resourceName;
 	//};
 
+	struct UnprocessedGuid
+	{
+		static const int32_t kMaxUniqueNameLength = 64;
+
+		uint64_t uniqueNameHash;
+		char uniqueName[kMaxUniqueNameLength];
+	};
+
 	/**
 	 * Intermediate format used to store unprocessed triangle meshes coming from any input format. 
 	 * Meshes are stored as indexed triangle lists, vertexes as a single interleaved array and indices as a separated array.
@@ -59,7 +67,8 @@ namespace Graphics
 	 */
 	struct UnprocessedTriMesh
 	{
-		int32_t materialId;
+		UnprocessedGuid materialRefGuid;
+		UnprocessedGuid guid;
 
 		UnprocessedTriMeshVertexAttribute vertexAttributes[VertexAttributes::kCount];
 		int32_t vertexStride;
@@ -72,10 +81,6 @@ namespace Graphics
 		// User custom data
 		int32_t customUserDataSize;
 		void* customUserData;
-
-		static const int32_t kMaxNameLength = 64;
-		int64_t nameHash;
-		char name[kMaxNameLength];
 	};
 
 	/**
