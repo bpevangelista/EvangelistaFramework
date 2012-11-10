@@ -21,9 +21,8 @@ namespace efw
 	{
 		enum ConsoleOutput
 		{
-			kNull,
-			kStdOut,
-			kFile
+			kFile,
+			kStdOut
 		};
 	}
 	typedef ConsoleOutputs::ConsoleOutput ConsoleOutput;
@@ -50,7 +49,7 @@ namespace efw
 		void WriteLine(int32_t messageType, const char* str, ...);
 
 		void SetWriteMask(int32_t writeMask);
-		void SetOutput(ConsoleOutput consoleOutput, const char* filepath = NULL);
+		void SetWriteOutput(ConsoleOutput consoleOutput, const char* filepath = NULL);
 	}
 
 }

@@ -87,7 +87,7 @@ void Console::SetWriteMask(int32_t writeMask)
 }
 
 
-void Console::SetOutput(ConsoleOutput consoleOutput, const char* filePath)
+void Console::SetWriteOutput(ConsoleOutput consoleOutput, const char* filePath)
 {
 	const char* input = NULL;
 	if (gConsoleFileOutput != NULL)
@@ -99,9 +99,10 @@ void Console::SetOutput(ConsoleOutput consoleOutput, const char* filePath)
 
 	switch (consoleOutput)
 	{
-	case ConsoleOutputs::kNull:
-		input = "NUL";
-		break;
+	// Don't want to expose it as it's the same feature as SetWriteMask(0)
+	//case ConsoleOutputs::kNull:
+	//	input = "NUL";
+	//	break;
 
 	case ConsoleOutputs::kStdOut:
 		input = "CON";
