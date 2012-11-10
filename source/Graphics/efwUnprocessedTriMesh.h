@@ -60,7 +60,7 @@ namespace Graphics
 		UnprocessedTriMeshVertexAttribute vertexAttributes[VertexAttributes::kCount];
 		uint16_t vertexStride;
 		uint16_t indexStride;
-		uint16_t vertexCount;
+		uint32_t vertexCount;
 		uint32_t indexCount;
 		void* vertexData;
 		void* indexData;
