@@ -331,6 +331,7 @@ void DebugPrintFacesInfo(const vector<uint64_t>& currentVertexIndexToAttributes)
 {
 	// TODO
 	//int32_t previousMeshIndex = meshes.size() - 1;
+	EFW_UNUSED(currentVertexIndexToAttributes);
 }
 
 
